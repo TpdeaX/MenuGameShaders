@@ -1,5 +1,5 @@
 #include <Geode/Geode.hpp>
-#include "MenuGameShaderLayer.hpp"
+#include "MenuShaderNode.hpp"
 #include "ShaderManager.hpp"
 #include "AudioManager.hpp"
 
