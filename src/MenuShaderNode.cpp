@@ -114,6 +114,7 @@ void MenuShaderNode::drawShader(cocos2d::CCSize const& winSize) {
     sprite->setShaderProgram(program);
     sprite->setAnchorPoint({ 0.0f, 0.0f });
     sprite->setPosition({ 0.0f, 0.0f });
+    sprite->setFlipY(false);
 
     program->use();
     ShaderManager::get()->setUniforms(program, winSize);

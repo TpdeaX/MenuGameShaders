@@ -26,9 +26,9 @@ class $modify(MenuShaderHook, MenuLayer) {
             auto shaderNode = MenuShaderNode::create(gameLayer);
             if (shaderNode) {
                 shaderNode->setID("menu-shader-node"_spr);
-                this->addChild(shaderNode, gameLayer->getZOrder());
+                this->addChild(shaderNode, -100);
                 gameLayer->setVisible(false);
-                log::info("MenuGameShaders: Attached MenuShaderNode to MenuLayer successfully");
+                log::info("MenuGameShaders: Attached MenuShaderNode to MenuLayer behind all menus (zOrder -100)");
             }
         } else {
             log::warn("MenuGameShaders: Could not find MenuGameLayer in MenuLayer");
