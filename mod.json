@@ -1,0 +1,113 @@
+{
+	"geode": "5.10.1",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"version": "v1.0.0",
+	"id": "tpdea.menugameshaders",
+	"name": "Menu Game Shaders",
+	"developer": "Tpdea",
+	"description": "Applies music & BPM reactive shaders and visual effects to the main menu background (MenuGameLayer).",
+	"repository": "https://github.com/TpdeaX/MenuGameShaders",
+	"settings": {
+		"enabled": {
+			"name": "Enable Mod",
+			"description": "Toggle menu shaders on or off.",
+			"type": "bool",
+			"default": true
+		},
+		"shader-style": {
+			"name": "Shader Style",
+			"description": "Select the visual shader style:\n0. Shockwave Pulse (GD 2.2 Sneak Peek style)\n1. Audio Waves (Sound frequency ripples)\n2. Beat Bulge & Warp (Pinch / bulge pulse)\n3. Neon Chromatic Beat (RGB split)\n4. Glitch & Scanline Pulse\n5. Liquid Ripples (Dreamy water waves)",
+			"type": "int",
+			"default": 0,
+			"min": 0,
+			"max": 5,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"audio-reactive": {
+			"name": "Music & Beat Reactivity",
+			"description": "Extract live bass and transients from background music to drive shaders in real time.",
+			"type": "bool",
+			"default": true
+		},
+		"bpm": {
+			"name": "Tempo (BPM)",
+			"description": "Base rhythm tempo in beats per minute when music FFT is subtle or for rhythmic sync.",
+			"type": "float",
+			"default": 128.0,
+			"min": 60.0,
+			"max": 240.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"pulse-intensity": {
+			"name": "Beat Pulse Intensity",
+			"description": "How strongly the shaders react to music beats and kicks.",
+			"type": "float",
+			"default": 1.0,
+			"min": 0.0,
+			"max": 3.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"distortion-strength": {
+			"name": "Distortion Strength",
+			"description": "Controls the magnitude of waves, ripples, and warp deformations.",
+			"type": "float",
+			"default": 1.0,
+			"min": 0.0,
+			"max": 3.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"speed": {
+			"name": "Animation Speed",
+			"description": "Speed multiplier for time-based shader animations.",
+			"type": "float",
+			"default": 1.0,
+			"min": 0.1,
+			"max": 3.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"color-tint-mode": {
+			"name": "Color Tint Mode",
+			"description": "Background color tinting style:\n0. Original (No tint)\n1. Sneak Peek Cycle (Purple -> Pink -> Cyan -> Green)\n2. Purple / Violet (Sneak Peek 1)\n3. Neon Pink / Magenta (Sneak Peek 2)\n4. Acid Green (Sneak Peek 3)\n5. Custom Color",
+			"type": "int",
+			"default": 1,
+			"min": 0,
+			"max": 5,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"custom-color": {
+			"name": "Custom Color",
+			"description": "Custom tint color when Color Tint Mode is set to 5.",
+			"type": "color",
+			"default": [ 220, 80, 255 ]
+		},
+		"chromatic-aberration": {
+			"name": "Chromatic Aberration",
+			"description": "Add subtle RGB channel separation along wave edges on beat.",
+			"type": "bool",
+			"default": true
+		}
+	}
+}
