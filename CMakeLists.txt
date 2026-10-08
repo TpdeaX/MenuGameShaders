@@ -9,7 +9,7 @@ else()
     set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 endif()
 
-project(MenuGameShaders VERSION 1.0.2)
+project(MenuGameShaders VERSION 1.0.3)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     src/*.cpp

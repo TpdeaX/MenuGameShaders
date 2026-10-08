@@ -28,14 +28,15 @@ bool MenuShaderNode::init(MenuGameLayer* gameLayer) {
     return true;
 }
 
+void MenuShaderNode::onExit() {
+    CCNode::onExit();
+    m_gameLayer = nullptr;
+    m_renderTexture = nullptr;
+}
+
 MenuShaderNode::~MenuShaderNode() {
-    if (m_renderTexture) {
-        m_renderTexture->release();
-        m_renderTexture = nullptr;
-    }
-    if (m_gameLayer) {
-        m_gameLayer->setVisible(true);
-    }
+    m_gameLayer = nullptr;
+    m_renderTexture = nullptr;
 }
 
 void MenuShaderNode::visit() {
@@ -57,14 +58,8 @@ void MenuShaderNode::visit() {
 
     // Recreate or allocate CCRenderTexture if size changed
     if (!m_renderTexture || m_renderSize != winSize) {
-        if (m_renderTexture) {
-            m_renderTexture->release();
-        }
         m_renderSize = winSize;
         m_renderTexture = CCRenderTexture::create(winSize.width, winSize.height);
-        if (m_renderTexture) {
-            m_renderTexture->retain();
-        }
     }
 
     if (!m_renderTexture) {
@@ -114,7 +109,6 @@ void MenuShaderNode::drawShader(cocos2d::CCSize const& winSize) {
     sprite->setShaderProgram(program);
     sprite->setAnchorPoint({ 0.0f, 0.0f });
     sprite->setPosition({ 0.0f, 0.0f });
-    sprite->setFlipY(false);
 
     program->use();
     ShaderManager::get()->setUniforms(program, winSize);

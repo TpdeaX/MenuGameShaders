@@ -5,15 +5,15 @@
 
 class MenuShaderNode : public cocos2d::CCNode {
 private:
-    cocos2d::CCRenderTexture* m_renderTexture = nullptr;
+    geode::Ref<cocos2d::CCRenderTexture> m_renderTexture = nullptr;
     MenuGameLayer* m_gameLayer = nullptr;
     cocos2d::CCSize m_renderSize = cocos2d::CCSizeZero;
-    bool m_capturedFirstFrame = false;
 
 public:
     static MenuShaderNode* create(MenuGameLayer* gameLayer);
 
     bool init(MenuGameLayer* gameLayer);
+    void onExit() override;
     ~MenuShaderNode() override;
 
     void visit() override;
