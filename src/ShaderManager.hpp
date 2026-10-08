@@ -15,12 +15,15 @@ private:
     GLint m_uPulse = -1;
     GLint m_uBass = -1;
     GLint m_uMids = -1;
+    GLint m_uTreble = -1;
     GLint m_uIntensity = -1;
     GLint m_uDistortion = -1;
     GLint m_uStyle = -1;
     GLint m_uColorMode = -1;
     GLint m_uCustomColor = -1;
     GLint m_uChromatic = -1;
+    GLint m_uBeatFlash = -1;
+    GLint m_uMouse = -1;
 
     ShaderManager() = default;
 

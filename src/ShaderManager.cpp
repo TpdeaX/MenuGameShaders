@@ -37,15 +37,18 @@ bool ShaderManager::compile() {
     m_uPulse = m_program->getUniformLocationForName("u_pulse");
     m_uBass = m_program->getUniformLocationForName("u_bass");
     m_uMids = m_program->getUniformLocationForName("u_mids");
+    m_uTreble = m_program->getUniformLocationForName("u_treble");
     m_uIntensity = m_program->getUniformLocationForName("u_intensity");
     m_uDistortion = m_program->getUniformLocationForName("u_distortion");
     m_uStyle = m_program->getUniformLocationForName("u_style");
     m_uColorMode = m_program->getUniformLocationForName("u_colorMode");
     m_uCustomColor = m_program->getUniformLocationForName("u_customColor");
     m_uChromatic = m_program->getUniformLocationForName("u_chromatic");
+    m_uBeatFlash = m_program->getUniformLocationForName("u_beatFlash");
+    m_uMouse = m_program->getUniformLocationForName("u_mouse");
 
     m_compiled = true;
-    log::info("MenuGameShaders: Shader compiled and linked successfully");
+    log::info("MenuGameShaders: Advanced shaders compiled and linked successfully");
     return true;
 }
 
@@ -59,6 +62,7 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
     float intensity = static_cast<float>(Mod::get()->getSettingValue<double>("pulse-intensity"));
     float distortion = static_cast<float>(Mod::get()->getSettingValue<double>("distortion-strength"));
     bool chromatic = Mod::get()->getSettingValue<bool>("chromatic-aberration");
+    bool flashEnabled = Mod::get()->getSettingValue<bool>("beat-flash");
     auto customCol = Mod::get()->getSettingValue<cocos2d::ccColor3B>("custom-color");
 
     if (m_uResolution != -1) {
@@ -75,6 +79,9 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
     }
     if (m_uMids != -1) {
         program->setUniformLocationWith1f(m_uMids, audio->getMids());
+    }
+    if (m_uTreble != -1) {
+        program->setUniformLocationWith1f(m_uTreble, audio->getTreble());
     }
     if (m_uIntensity != -1) {
         program->setUniformLocationWith1f(m_uIntensity, intensity);
@@ -98,5 +105,15 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
     }
     if (m_uChromatic != -1) {
         program->setUniformLocationWith1f(m_uChromatic, chromatic ? 1.0f : 0.0f);
+    }
+    if (m_uBeatFlash != -1) {
+        float flashVal = flashEnabled ? audio->getKickPulse() * 0.35f : 0.0f;
+        program->setUniformLocationWith1f(m_uBeatFlash, flashVal);
+    }
+    if (m_uMouse != -1) {
+        auto mousePos = cocos::getMousePos();
+        float normX = std::clamp(mousePos.x / std::max(winSize.width, 1.0f), 0.0f, 1.0f);
+        float normY = std::clamp(mousePos.y / std::max(winSize.height, 1.0f), 0.0f, 1.0f);
+        program->setUniformLocationWith2f(m_uMouse, normX, normY);
     }
 }

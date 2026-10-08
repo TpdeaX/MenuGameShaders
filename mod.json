@@ -6,7 +6,7 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.0.3",
+	"version": "v1.1.0",
 	"id": "tpdea.menugameshaders",
 	"name": "Menu Game Shaders",
 	"developer": "Tpdea",
@@ -21,11 +21,11 @@
 		},
 		"shader-style": {
 			"name": "Shader Style",
-			"description": "Select the visual shader style:\n0. Shockwave Pulse (GD 2.2 Sneak Peek style)\n1. Audio Waves (Sound frequency ripples)\n2. Beat Bulge & Warp (Pinch / bulge pulse)\n3. Neon Chromatic Beat (RGB split)\n4. Glitch & Scanline Pulse\n5. Liquid Ripples (Dreamy water waves)",
+			"description": "Select the visual shader style:\n0. Shockwave Pulse (GD 2.2 Sneak Peek style)\n1. Audio Waves (Sound frequency ripples)\n2. Beat Bulge & Warp (Pinch / bulge pulse)\n3. Neon Chromatic Beat (RGB split)\n4. Glitch & Scanline Pulse\n5. Liquid Ripples (Dreamy water waves)\n6. Radial Audio Equalizer (Pulsing frequency ring)\n7. Hyperspace Warp Tunnel (Cosmic speed rush)\n8. Retro CRT Arcade / Cyberpunk (Scanlines & curvature)\n9. Kaleidoscope Dimension (8-fold crystal symmetry)\n10. Pixel Crunch Matrix (8-Bit mosaic dither)\n11. Gravitational Vortex / Black Hole (Hypnotic twist)",
 			"type": "int",
 			"default": 0,
 			"min": 0,
-			"max": 5,
+			"max": 11,
 			"control": {
 				"arrows": true,
 				"slider": true
@@ -33,17 +33,17 @@
 		},
 		"audio-reactive": {
 			"name": "Music & Beat Reactivity",
-			"description": "Extract live bass and transients from background music to drive shaders in real time.",
+			"description": "Extract live bass, transients and spectral flux from background music to drive shaders in real time.",
 			"type": "bool",
 			"default": true
 		},
-		"bpm": {
-			"name": "Tempo (BPM)",
-			"description": "Base rhythm tempo in beats per minute when music FFT is subtle or for rhythmic sync.",
+		"beat-sensitivity": {
+			"name": "Beat Detection Sensitivity",
+			"description": "How strictly or easily music transients and kick drums trigger beat explosions.",
 			"type": "float",
-			"default": 128.0,
-			"min": 60.0,
-			"max": 240.0,
+			"default": 1.2,
+			"min": 0.2,
+			"max": 3.0,
 			"control": {
 				"arrows": true,
 				"slider": true
@@ -60,6 +60,18 @@
 				"arrows": true,
 				"slider": true
 			}
+		},
+		"bass-shake": {
+			"name": "Bass Camera Shake",
+			"description": "Adds physical screen impact and camera bump on heavy kick drops.",
+			"type": "bool",
+			"default": true
+		},
+		"beat-flash": {
+			"name": "Beat Strobe Flash",
+			"description": "Adds subtle luminescence strobe on heavy beat drops.",
+			"type": "bool",
+			"default": true
 		},
 		"distortion-strength": {
 			"name": "Distortion Strength",
@@ -80,6 +92,18 @@
 			"default": 1.0,
 			"min": 0.1,
 			"max": 3.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"bpm": {
+			"name": "Tempo Fallback (BPM)",
+			"description": "Base rhythm tempo in beats per minute when music is silent or in menus without audio.",
+			"type": "float",
+			"default": 128.0,
+			"min": 60.0,
+			"max": 240.0,
 			"control": {
 				"arrows": true,
 				"slider": true

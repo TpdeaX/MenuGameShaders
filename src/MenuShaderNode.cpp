@@ -107,8 +107,9 @@ void MenuShaderNode::drawShader(cocos2d::CCSize const& winSize) {
     }
 
     sprite->setShaderProgram(program);
+    float shake = AudioManager::get()->getShakeOffset();
     sprite->setAnchorPoint({ 0.0f, 0.0f });
-    sprite->setPosition({ 0.0f, 0.0f });
+    sprite->setPosition({ shake, shake * 0.6f });
 
     program->use();
     ShaderManager::get()->setUniforms(program, winSize);
