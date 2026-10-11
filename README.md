@@ -4,6 +4,7 @@ Geometry Dash 2.2 Geode mod that adds music and BPM-reactive post-processing sha
 
 ## Features
 - **Audio-Reactive**: Connects directly to FMOD to analyze music frequencies (bass/mids/treble) and synchronize shockwaves and ripples with the beat.
+- **System Audio (Windows)**: Optional WASAPI loopback capture lets the shaders react to your whole device's output (Spotify, YouTube, etc.) instead of the in-game music.
 - **Configurable Styles**: Shockwave Pulse, Audio Waves, Beat Bulge, Neon Chromatic, Glitch, and Liquid Ripples.
 - **Color Themes**: Sneak Peek Cycling, Neon Violet, Magenta, Acid Green, or custom RGB.
 - **Optimized**: Low overhead off-screen FBO rendering that leaves main menu buttons and UI crisp.

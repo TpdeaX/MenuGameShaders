@@ -1,6 +1,7 @@
 #include "MenuShaderNode.hpp"
 #include "ShaderManager.hpp"
 #include "AudioManager.hpp"
+#include "SystemAudioCapture.hpp"
 
 using namespace geode::prelude;
 
@@ -43,6 +44,7 @@ void MenuShaderNode::visit() {
     bool enabled = Mod::get()->getSettingValue<bool>("enabled");
 
     if (!enabled || !m_gameLayer) {
+        SystemAudioCapture::get()->stop();
         if (m_gameLayer) {
             m_gameLayer->setVisible(true);
         }

@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.0
+* **System Audio Source (Windows)**: New "Audio Source" setting lets the shaders react to the default playback device's output (Spotify, browser, etc.) instead of the in-game music, via WASAPI loopback capture with its own FFT band analysis. FMOD game-music analysis remains the fallback on macOS and Android.
+
 ## v1.1.0
 * **High-Fidelity Audio Analysis**: Complete rewrite of the audio beat engine using dynamic Spectral Flux and Automatic Gain Control (AGC) for sub-bass and kick drums. The beat pulse is now tightly synchronized and faithful to any music playing.
 * **6 New Shader Styles (12 total)**:

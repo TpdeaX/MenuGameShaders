@@ -3,6 +3,7 @@
 #include <Geode/binding/MenuGameLayer.hpp>
 #include "MenuShaderNode.hpp"
 #include "AudioManager.hpp"
+#include "SystemAudioCapture.hpp"
 
 using namespace geode::prelude;
 
@@ -40,5 +41,6 @@ class $modify(MenuShaderHook, MenuLayer) {
     void onExit() {
         MenuLayer::onExit();
         AudioManager::get()->detach();
+        SystemAudioCapture::get()->stop();
     }
 };

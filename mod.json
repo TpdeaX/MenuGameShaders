@@ -6,7 +6,7 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.1.0",
+	"version": "v1.2.0",
 	"id": "tpdea.menugameshaders",
 	"name": "Menu Game Shaders",
 	"developer": "Tpdea",
@@ -36,6 +36,18 @@
 			"description": "Extract live bass, transients and spectral flux from background music to drive shaders in real time.",
 			"type": "bool",
 			"default": true
+		},
+		"audio-source": {
+			"name": "Audio Source",
+			"description": "Which audio drives the shaders:\n0. Game Music (FMOD)\n1. System Audio (Windows only, loopback of the default playback device)",
+			"type": "int",
+			"default": 0,
+			"min": 0,
+			"max": 1,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
 		},
 		"beat-sensitivity": {
 			"name": "Beat Detection Sensitivity",

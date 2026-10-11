@@ -4,6 +4,7 @@
 
 ### Features
 * **Music & BPM Reactivity**: Live FMOD frequency analysis (FFT) detects bass kicks and tempo transients, pulsing the shaders in real-time with whatever track is playing.
+* **System Audio Source (Windows)**: Optional WASAPI loopback captures your device's output (Spotify, browser, etc.) so the shaders react to any audio, not just the game's music.
 * **Fallback BPM Clock**: Ensures rhythmic pulsation even during quiet song sections or custom music.
 * **Multiple Visual Styles**:
   * **Shockwave Pulse**: Expanding radial shockwave rings that ripple across the background on beat drops (RobTop 2.2 Sneak Peek style).

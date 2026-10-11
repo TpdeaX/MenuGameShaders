@@ -1,4 +1,5 @@
 #include "AudioManager.hpp"
+#include "SystemAudioCapture.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -59,10 +60,7 @@ void AudioManager::update(float dt) {
     m_time += dt * speed;
 
     bool audioReactive = Mod::get()->getSettingValue<bool>("audio-reactive");
-
-    if (audioReactive && !m_attached) {
-        this->attach();
-    }
+    int audioSource = static_cast<int>(Mod::get()->getSettingValue<int64_t>("audio-source"));
 
     float rawSubBass = 0.0f;
     float rawBass = 0.0f;
@@ -70,42 +68,73 @@ void AudioManager::update(float dt) {
     float rawTreble = 0.0f;
     bool hasAudioSignal = false;
 
-    if (audioReactive && m_attached && m_fftDSP) {
-        FMOD_DSP_PARAMETER_FFT* fft = nullptr;
-        FMOD_RESULT res = m_fftDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, reinterpret_cast<void**>(&fft), nullptr, nullptr, 0);
+    if (audioReactive && audioSource == 1) {
+        // System audio capture (Windows WASAPI loopback).
+        auto sysAudio = SystemAudioCapture::get();
+        if (!sysAudio->isRunning()) {
+            sysAudio->start();
+        }
+        if (sysAudio->isRunning()) {
+            rawSubBass = sysAudio->getSubBass();
+            rawBass = sysAudio->getBass();
+            rawMids = sysAudio->getMids();
+            rawTreble = sysAudio->getTreble();
+            hasAudioSignal = sysAudio->hasSignal();
+        }
 
-        if (res == FMOD_OK && fft && fft->length > 0 && fft->numchannels > 0 && fft->spectrum[0]) {
-            int len = fft->length;
+        // Do not keep the FMOD DSP attached while in system-audio mode.
+        if (m_attached) {
+            this->detach();
+        }
+    } else {
+        // Game music analysis via FMOD.
+        if (audioReactive && !m_attached) {
+            this->attach();
+        }
 
-            // 1. Sub-Bass & Kick Punch (Bins 1 to 5: ~20Hz to 110Hz)
-            int subEnd = std::min(6, len);
-            for (int i = 1; i < subEnd; ++i) {
-                rawSubBass += fft->spectrum[0][i];
+        // Stop the system capture whenever it is not being used.
+        auto sysAudio = SystemAudioCapture::get();
+        if (sysAudio->isRunning()) {
+            sysAudio->stop();
+        }
+
+        if (audioReactive && m_attached && m_fftDSP) {
+            FMOD_DSP_PARAMETER_FFT* fft = nullptr;
+            FMOD_RESULT res = m_fftDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, reinterpret_cast<void**>(&fft), nullptr, nullptr, 0);
+
+            if (res == FMOD_OK && fft && fft->length > 0 && fft->numchannels > 0 && fft->spectrum[0]) {
+                int len = fft->length;
+
+                // 1. Sub-Bass & Kick Punch (Bins 1 to 5: ~20Hz to 110Hz)
+                int subEnd = std::min(6, len);
+                for (int i = 1; i < subEnd; ++i) {
+                    rawSubBass += fft->spectrum[0][i];
+                }
+                rawSubBass /= static_cast<float>(std::max(1, subEnd - 1));
+
+                // 2. Bassline & Low Mids (Bins 6 to 18: ~110Hz to 400Hz)
+                int bassEnd = std::min(19, len);
+                for (int i = subEnd; i < bassEnd; ++i) {
+                    rawBass += fft->spectrum[0][i];
+                }
+                rawBass /= static_cast<float>(std::max(1, bassEnd - subEnd));
+
+                // 3. Mids / Snare / Vocals (Bins 19 to 65: ~400Hz to 1400Hz)
+                int midEnd = std::min(66, len);
+                for (int i = bassEnd; i < midEnd; ++i) {
+                    rawMids += fft->spectrum[0][i];
+                }
+                rawMids /= static_cast<float>(std::max(1, midEnd - bassEnd));
+
+                // 4. Treble / Hi-Hats / Cymbals (Bins 66 to 180: ~1400Hz to 4000Hz)
+                int trebEnd = std::min(180, len);
+                for (int i = midEnd; i < trebEnd; ++i) {
+                    rawTreble += fft->spectrum[0][i];
+                }
+                rawTreble /= static_cast<float>(std::max(1, trebEnd - midEnd));
+
+                hasAudioSignal = (rawSubBass + rawBass + rawMids) > 0.0001f;
             }
-            rawSubBass /= static_cast<float>(std::max(1, subEnd - 1));
-
-            // 2. Bassline & Low Mids (Bins 6 to 18: ~110Hz to 400Hz)
-            int bassEnd = std::min(19, len);
-            for (int i = subEnd; i < bassEnd; ++i) {
-                rawBass += fft->spectrum[0][i];
-            }
-            rawBass /= static_cast<float>(std::max(1, bassEnd - subEnd));
-
-            // 3. Mids / Snare / Vocals (Bins 19 to 65: ~400Hz to 1400Hz)
-            int midEnd = std::min(66, len);
-            for (int i = bassEnd; i < midEnd; ++i) {
-                rawMids += fft->spectrum[0][i];
-            }
-            rawMids /= static_cast<float>(std::max(1, midEnd - bassEnd));
-
-            // 4. Treble / Hi-Hats / Cymbals (Bins 66 to 180: ~1400Hz to 4000Hz)
-            int trebEnd = std::min(180, len);
-            for (int i = midEnd; i < trebEnd; ++i) {
-                rawTreble += fft->spectrum[0][i];
-            }
-            rawTreble /= static_cast<float>(std::max(1, trebEnd - midEnd));
-
-            hasAudioSignal = (rawSubBass + rawBass + rawMids) > 0.0001f;
         }
     }
 
