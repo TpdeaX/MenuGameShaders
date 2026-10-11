@@ -29,5 +29,6 @@ setup_geode_mod(${PROJECT_NAME})
 
 if (WIN32)
     # WASAPI loopback system-audio capture (CoInitializeEx / CoCreateInstance / CoTaskMemFree).
-    target_link_libraries(${PROJECT_NAME} PRIVATE ole32)
+    # Plain signature (no PRIVATE) to match setup_geode_mod's target_link_libraries usage.
+    target_link_libraries(${PROJECT_NAME} ole32)
 endif()
