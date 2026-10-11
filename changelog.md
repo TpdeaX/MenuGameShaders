@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.1
+* **Fixed System Audio on Windows**: the `MMDeviceEnumerator` CLSID had a typo (`467E` instead of `467C`), so system-audio capture always failed with `REGDB_E_CLASSNOTREG` (0x80040154).
+* **Fixed crash when enabling System Audio**: the capture thread is now joined before being restarted (reassigning a joinable `std::thread` called `std::terminate()`), plus a 2 s retry cooldown and defensive COM null-checks.
+
 ## v1.2.0
 * **System Audio Source (Windows)**: New "Audio Source" setting lets the shaders react to the default playback device's output (Spotify, browser, etc.) instead of the in-game music, via WASAPI loopback capture with its own FFT band analysis. FMOD game-music analysis remains the fallback on macOS and Android.
 
