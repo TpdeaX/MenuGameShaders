@@ -15,47 +15,55 @@ AudioManager* AudioManager::get() {
 }
 
 void AudioManager::attach() {
-    if (m_attached) {
+    if (m_attached && m_fftDSP) {
         return;
     }
 
     auto engine = FMODAudioEngine::sharedEngine();
-    if (!engine || !engine->m_system || !engine->m_backgroundMusicChannel) {
+    if (!engine || !engine->m_system) {
         return;
     }
 
     if (!m_fftDSP) {
         FMOD_RESULT res = engine->m_system->createDSPByType(FMOD_DSP_TYPE_FFT, &m_fftDSP);
-        if (res == FMOD_OK && m_fftDSP) {
-            engine->m_backgroundMusicChannel->addDSP(0, m_fftDSP);
-            m_attached = true;
-            log::info("MenuGameShaders: Attached FMOD FFT DSP to background music channel");
-        } else {
+        if (res != FMOD_OK || !m_fftDSP) {
             log::warn("MenuGameShaders: Could not create FMOD FFT DSP (error code: {})", static_cast<int>(res));
+            return;
         }
+    }
+
+    FMOD::ChannelGroup* masterGroup = nullptr;
+    FMOD_RESULT res = engine->m_system->getMasterChannelGroup(&masterGroup);
+    if (res == FMOD_OK && masterGroup) {
+        masterGroup->addDSP(0, m_fftDSP);
+        m_attached = true;
+        log::info("MenuGameShaders: Attached FMOD FFT DSP to Master Channel Group");
+    } else if (engine->m_backgroundMusicChannel) {
+        engine->m_backgroundMusicChannel->addDSP(0, m_fftDSP);
+        m_attached = true;
+        log::info("MenuGameShaders: Attached FMOD FFT DSP to background music channel");
     }
 }
 
 void AudioManager::detach() {
-    if (!m_attached && !m_fftDSP) {
-        return;
-    }
-
-    auto engine = FMODAudioEngine::sharedEngine();
-    if (engine && engine->m_backgroundMusicChannel && m_fftDSP) {
-        engine->m_backgroundMusicChannel->removeDSP(m_fftDSP);
-    }
-
     if (m_fftDSP) {
         m_fftDSP->release();
         m_fftDSP = nullptr;
     }
-
     m_attached = false;
     log::info("MenuGameShaders: Detached and released FMOD FFT DSP");
 }
 
 void AudioManager::update(float dt) {
+    auto director = cocos2d::CCDirector::sharedDirector();
+    if (director) {
+        unsigned int frame = director->getTotalFrames();
+        if (frame != 0 && frame == m_lastUpdateFrame) {
+            return;
+        }
+        m_lastUpdateFrame = frame;
+    }
+
     float speed = static_cast<float>(Mod::get()->getSettingValue<double>("speed"));
     m_time += dt * speed;
 
@@ -88,7 +96,7 @@ void AudioManager::update(float dt) {
         }
     } else {
         // Game music analysis via FMOD.
-        if (audioReactive && !m_attached) {
+        if (audioReactive && (!m_attached || !m_fftDSP)) {
             this->attach();
         }
 
@@ -139,7 +147,7 @@ void AudioManager::update(float dt) {
     }
 
     // Adaptive Peak Normalizer / Auto-Gain
-    m_maxObservedEnergy = std::max(0.01f, std::max(m_maxObservedEnergy * 0.995f, rawSubBass * 1.2f));
+    m_maxObservedEnergy = std::max(0.01f, std::max(m_maxObservedEnergy * 0.995f, (rawSubBass + rawBass * 0.5f) * 1.2f));
 
     // Normalize bands using dynamic scaling
     float normFactor = 1.0f / m_maxObservedEnergy;
@@ -158,43 +166,40 @@ void AudioManager::update(float dt) {
     float pulseMult = static_cast<float>(Mod::get()->getSettingValue<double>("pulse-intensity"));
     float sensitivity = static_cast<float>(Mod::get()->getSettingValue<double>("beat-sensitivity"));
 
+    // Combined low-end punch for kick detection (both sub-bass and punchy bass)
+    float lowEnergy = normSubBass * 0.65f + normBass * 0.35f;
+
     // Positive flux (sudden energy increase on kick)
-    float flux = std::max(0.0f, normSubBass - m_prevSubBass);
-    m_prevSubBass = normSubBass;
+    float flux = std::max(0.0f, lowEnergy - m_prevSubBass);
+    m_prevSubBass = lowEnergy;
 
     // Rolling average & variance for dynamic kick threshold
-    m_energyAverage = m_energyAverage * 0.92f + normSubBass * 0.08f;
-    float diff = std::abs(normSubBass - m_energyAverage);
+    m_energyAverage = m_energyAverage * 0.92f + lowEnergy * 0.08f;
+    float diff = std::abs(lowEnergy - m_energyAverage);
     m_energyVariance = m_energyVariance * 0.92f + diff * 0.08f;
 
-    float threshold = m_energyAverage + m_energyVariance * (1.6f / std::max(0.2f, sensitivity));
+    float threshold = m_energyAverage + m_energyVariance * (1.3f / std::max(0.2f, sensitivity));
     bool detectedKick = false;
 
     // Kick trigger: significant energy increase + refractory window (min 130ms between kicks)
-    if (hasAudioSignal && flux > (0.12f / sensitivity) && normSubBass > threshold && (m_time - m_lastPeakTime) > 0.13f) {
+    if (hasAudioSignal && flux > (0.08f / sensitivity) && lowEnergy > threshold && (m_time - m_lastPeakTime) > 0.13f) {
         m_kickPulse = 1.0f * pulseMult;
         m_lastPeakTime = m_time;
         detectedKick = true;
     }
 
-    // --- Silence tracking (no real audio signal) ---
-    if (hasAudioSignal) {
-        m_silenceTime = 0.0f;
-    } else {
-        m_silenceTime += dt;
-    }
-
-    // --- BPM Fallback / Clock Sync (keeps rhythm if music is quiet) ---
+    // --- Continuous BPM Fallback / Clock Sync (keeps rhythm locked) ---
     float bpm = static_cast<float>(Mod::get()->getSettingValue<double>("bpm"));
     float bps = std::clamp(bpm / 60.0f, 0.5f, 5.0f);
+    float beatInterval = 1.0f / bps;
     m_bpmClock += dt * bps;
 
     if (m_bpmClock >= 1.0f) {
         m_bpmClock -= 1.0f;
-        // Stop faking beats after ~5s of genuine silence, so a muted game
-        // doesn't keep pulsing as if audio were playing.
-        if (!detectedKick && !hasAudioSignal && m_silenceTime < 5.0f && (m_time - m_lastPeakTime) > 0.22f) {
-            m_kickPulse = 0.85f * pulseMult;
+        // If no kick was triggered naturally for at least 80% of a beat interval,
+        // fire the rhythmic beat pulse so it ALWAYS stays grooving to the tempo!
+        if (!detectedKick && (m_time - m_lastPeakTime) > (beatInterval * 0.8f)) {
+            m_kickPulse = 0.9f * pulseMult;
             m_lastPeakTime = m_time;
         }
     }

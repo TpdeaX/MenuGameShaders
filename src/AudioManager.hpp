@@ -25,6 +25,7 @@ private:
     float m_silenceTime = 0.0f;
     float m_shakeOffset = 0.0f;
     bool m_attached = false;
+    unsigned int m_lastUpdateFrame = 0;
 
     AudioManager() = default;
 

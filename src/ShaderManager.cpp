@@ -119,8 +119,10 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
     }
     if (m_uMouse != -1) {
         auto mousePos = cocos::getMousePos();
-        float normX = std::clamp(mousePos.x / std::max(winSize.width, 1.0f), 0.0f, 1.0f);
-        float normY = std::clamp(mousePos.y / std::max(winSize.height, 1.0f), 0.0f, 1.0f);
+        auto director = cocos2d::CCDirector::sharedDirector();
+        auto refSize = director ? director->getWinSize() : winSize;
+        float normX = std::clamp(mousePos.x / std::max(refSize.width, 1.0f), 0.0f, 1.0f);
+        float normY = std::clamp(mousePos.y / std::max(refSize.height, 1.0f), 0.0f, 1.0f);
         program->setUniformLocationWith2f(m_uMouse, normX, normY);
     }
 

@@ -52,12 +52,10 @@ class ShaderPreviewNode final : public cocos2d::CCNode {
 protected:
     geode::Ref<cocos2d::CCRenderTexture> m_pattern;
     cocos2d::CCSprite* m_sprite = nullptr;
-    float m_time = 0.0f;
-    GLint m_uTime = -1;
 
     bool init(cocos2d::CCSize const& size);
     void update(float dt) override;
-    void visit() override;
+    void draw() override;
 
 public:
     static ShaderPreviewNode* create(cocos2d::CCSize const& size);
