@@ -484,8 +484,9 @@ void ShaderBuilderPopup::onSlider(CCObject* sender) {
             row.label->setString(formatValue(row.name, value, false).c_str());
         }
 
-        // Immediately persist settings to disk
+        // Immediately persist settings to disk and sync with parent menu
         (void)Mod::get()->saveData();
+        this->syncParentSettings();
         break;
     }
 }
@@ -504,22 +505,33 @@ void ShaderBuilderPopup::onToggle(CCObject* sender) {
         bool current = Mod::get()->getSettingValue<bool>(row.key);
         Mod::get()->setSettingValue<bool>(row.key, !current);
 
-        // Immediately persist settings to disk
+        // Immediately persist settings to disk and sync with parent menu
         (void)Mod::get()->saveData();
+        this->syncParentSettings();
         break;
     }
 }
 
+void ShaderBuilderPopup::syncParentSettings() {
+    if (!m_parentSettingsPopup) return;
+
+    std::function<void(cocos2d::CCNode*)> updateNodes = [&](cocos2d::CCNode* node) {
+        if (!node) return;
+        if (auto sNode = typeinfo_cast<geode::SettingNodeV3*>(node)) {
+            sNode->updateState(nullptr);
+        }
+        auto children = node->getChildren();
+        if (children) {
+            for (int i = 0; i < children->count(); ++i) {
+                updateNodes(static_cast<cocos2d::CCNode*>(children->objectAtIndex(i)));
+            }
+        }
+    };
+    updateNodes(m_parentSettingsPopup);
+}
+
 void ShaderBuilderPopup::onClose(CCObject* sender) {
-    // 1. Immediately persist all mod settings to disk
+    this->syncParentSettings();
     (void)Mod::get()->saveData();
-
-    auto parent = m_parentSettingsPopup;
     Popup::onClose(sender);
-
-    // 2. If opened from Geode's ModSettingsPopup, refresh it so its UI displays the new values
-    if (parent && parent->getParent()) {
-        parent->keyBackClicked();
-        geode::openSettingsPopup(Mod::get());
-    }
 }

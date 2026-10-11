@@ -89,6 +89,7 @@ protected:
     void buildControls();
     void onSlider(cocos2d::CCObject* sender);
     void onToggle(cocos2d::CCObject* sender);
+    void syncParentSettings();
     void onClose(cocos2d::CCObject* sender) override;
 
 public:
