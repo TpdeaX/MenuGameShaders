@@ -28,6 +28,7 @@ add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 setup_geode_mod(${PROJECT_NAME})
 
 if (WIN32)
-    # WASAPI loopback system-audio capture (CoInitializeEx / CoCreateInstance / CoTaskMemFree).
-    target_link_libraries(${PROJECT_NAME} PRIVATE ole32)
+    # WASAPI loopback system-audio capture (CoInitializeEx / CoCreateInstance / CoTaskMemFree)
+    # and the MMDevice / audio-client COM GUIDs.
+    target_link_libraries(${PROJECT_NAME} PRIVATE ole32 uuid)
 endif()

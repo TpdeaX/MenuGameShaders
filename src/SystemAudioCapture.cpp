@@ -184,13 +184,13 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
     bool started = false;
 
     hr = CoCreateInstance(
-        __uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
-        __uuidof(IMMDeviceEnumerator), reinterpret_cast<void**>(&enumerator));
+        CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL,
+        IID_IMMDeviceEnumerator, reinterpret_cast<void**>(&enumerator));
     if (SUCCEEDED(hr)) {
         hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
     }
     if (SUCCEEDED(hr)) {
-        hr = device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
+        hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
     }
     if (SUCCEEDED(hr)) {
         hr = audioClient->GetMixFormat(&mixFormat);
@@ -226,7 +226,7 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
         hr = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, mixFormat, nullptr);
     }
     if (SUCCEEDED(hr)) {
-        hr = audioClient->GetService(__uuidof(IAudioCaptureClient), reinterpret_cast<void**>(&captureClient));
+        hr = audioClient->GetService(IID_IAudioCaptureClient, reinterpret_cast<void**>(&captureClient));
     }
     if (SUCCEEDED(hr)) {
         hr = audioClient->Start();
