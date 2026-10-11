@@ -6,7 +6,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-#include <combaseapi.h>
+#include <objbase.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <mmreg.h>
@@ -21,6 +21,18 @@ static const GUID kSubTypePCM = {
 };
 static const GUID kSubTypeIEEEFloat = {
     0x00000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x3B, 0x89, 0x71 }
+};
+static const GUID kClsidMMDeviceEnumerator = {
+    0xBCDE0395, 0xE52F, 0x467E, { 0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E }
+};
+static const GUID kIidIMMDeviceEnumerator = {
+    0xA95664D2, 0x9614, 0x4F35, { 0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6 }
+};
+static const GUID kIidIAudioClient = {
+    0x1CB9AD4C, 0xDBFA, 0x4C32, { 0xB1, 0x78, 0xC2, 0xF5, 0x68, 0xA7, 0x03, 0xB2 }
+};
+static const GUID kIidIAudioCaptureClient = {
+    0xC8ADBD64, 0xE71E, 0x48A0, { 0xA4, 0xDE, 0x18, 0x5C, 0x39, 0x5C, 0xD3, 0x17 }
 };
 
 constexpr float kPi = 3.14159265358979323846f;
@@ -184,13 +196,13 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
     bool started = false;
 
     hr = CoCreateInstance(
-        CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL,
-        IID_IMMDeviceEnumerator, reinterpret_cast<void**>(&enumerator));
+        kClsidMMDeviceEnumerator, nullptr, CLSCTX_ALL,
+        kIidIMMDeviceEnumerator, reinterpret_cast<void**>(&enumerator));
     if (SUCCEEDED(hr)) {
         hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
     }
     if (SUCCEEDED(hr)) {
-        hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
+        hr = device->Activate(kIidIAudioClient, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
     }
     if (SUCCEEDED(hr)) {
         hr = audioClient->GetMixFormat(&mixFormat);
@@ -226,7 +238,7 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
         hr = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, mixFormat, nullptr);
     }
     if (SUCCEEDED(hr)) {
-        hr = audioClient->GetService(IID_IAudioCaptureClient, reinterpret_cast<void**>(&captureClient));
+        hr = audioClient->GetService(kIidIAudioCaptureClient, reinterpret_cast<void**>(&captureClient));
     }
     if (SUCCEEDED(hr)) {
         hr = audioClient->Start();
