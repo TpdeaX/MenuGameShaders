@@ -198,6 +198,7 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
     IAudioCaptureClient* captureClient = nullptr;
     WAVEFORMATEX* mixFormat = nullptr;
     bool started = false;
+    const char* step = "CoCreateInstance(MMDeviceEnumerator)";
 
     hr = CoCreateInstance(
         kClsidMMDeviceEnumerator, nullptr, CLSCTX_ALL,
@@ -205,23 +206,42 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
     if (SUCCEEDED(hr) && !enumerator) {
         hr = E_FAIL;
     }
+
     if (SUCCEEDED(hr)) {
+        step = "GetDefaultAudioEndpoint";
         hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
-    }
-    if (SUCCEEDED(hr) && !device) {
-        hr = E_FAIL;
-    }
-    if (SUCCEEDED(hr)) {
-        hr = device->Activate(kIidIAudioClient, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
-    }
-    if (SUCCEEDED(hr) && !audioClient) {
-        hr = E_FAIL;
-    }
-    if (SUCCEEDED(hr)) {
-        hr = audioClient->GetMixFormat(&mixFormat);
+        if (SUCCEEDED(hr) && !device) {
+            hr = E_FAIL;
+        }
     }
 
-    if (SUCCEEDED(hr) && mixFormat) {
+    if (SUCCEEDED(hr)) {
+        step = "IMMDevice::Activate(IAudioClient)";
+        hr = device->Activate(kIidIAudioClient, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
+        if (SUCCEEDED(hr) && !audioClient) {
+            hr = E_FAIL;
+        }
+    }
+
+    if (SUCCEEDED(hr)) {
+        step = "GetMixFormat";
+        hr = audioClient->GetMixFormat(&mixFormat);
+        if (SUCCEEDED(hr) && !mixFormat) {
+            hr = E_FAIL;
+        }
+    }
+
+    if (SUCCEEDED(hr)) {
+        step = "format detection";
+        geode::log::info(
+            "MenuGameShaders: system audio mix format tag=0x{:X} channels={} rate={} bits={} blockAlign={} cbSize={}",
+            static_cast<unsigned>(mixFormat->wFormatTag),
+            static_cast<int>(mixFormat->nChannels),
+            static_cast<unsigned long>(mixFormat->nSamplesPerSec),
+            static_cast<int>(mixFormat->wBitsPerSample),
+            static_cast<int>(mixFormat->nBlockAlign),
+            static_cast<int>(mixFormat->cbSize));
+
         impl->channels = mixFormat->nChannels;
         impl->sampleRate = mixFormat->nSamplesPerSec;
         impl->isFloat = false;
@@ -243,26 +263,34 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
         const bool supported = (impl->isFloat && impl->bytesPerSample == 4) ||
                                (!impl->isFloat && impl->bytesPerSample == 2);
         if (impl->sampleRate <= 0 || impl->channels <= 0 || !supported) {
+            geode::log::warn(
+                "MenuGameShaders: unsupported mix format (float={} bytesPerSample={} channels={} rate={})",
+                impl->isFloat, impl->bytesPerSample, impl->channels, impl->sampleRate);
             hr = E_FAIL;
         }
     }
 
     if (SUCCEEDED(hr)) {
+        step = "IAudioClient::Initialize(LOOPBACK)";
         hr = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, mixFormat, nullptr);
     }
+
     if (SUCCEEDED(hr)) {
+        step = "GetService(IAudioCaptureClient)";
         hr = audioClient->GetService(kIidIAudioCaptureClient, reinterpret_cast<void**>(&captureClient));
+        if (SUCCEEDED(hr) && !captureClient) {
+            hr = E_FAIL;
+        }
     }
-    if (SUCCEEDED(hr) && !captureClient) {
-        hr = E_FAIL;
-    }
+
     if (SUCCEEDED(hr)) {
+        step = "IAudioClient::Start";
         hr = audioClient->Start();
         started = SUCCEEDED(hr);
     }
 
     if (!started) {
-        geode::log::error("MenuGameShaders: system audio setup failed (hr=0x{:X})", static_cast<unsigned long>(hr));
+        geode::log::error("MenuGameShaders: system audio failed at '{}' (hr=0x{:X})", step, static_cast<unsigned long>(hr));
         if (mixFormat) CoTaskMemFree(mixFormat);
         if (captureClient) captureClient->Release();
         if (audioClient) audioClient->Release();
@@ -272,6 +300,8 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
         impl->running.store(false);
         return;
     }
+
+    geode::log::info("MenuGameShaders: system audio capture started ({} ch, {} Hz)", impl->channels, impl->sampleRate);
 
     // Hann window.
     impl->window.resize(impl->fftSize);
