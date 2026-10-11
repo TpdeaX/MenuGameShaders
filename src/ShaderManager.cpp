@@ -67,6 +67,7 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
     int colorMode = static_cast<int>(Mod::get()->getSettingValue<int64_t>("color-tint-mode"));
     float intensity = static_cast<float>(Mod::get()->getSettingValue<double>("pulse-intensity"));
     float distortion = static_cast<float>(Mod::get()->getSettingValue<double>("distortion-strength"));
+    float speed = static_cast<float>(Mod::get()->getSettingValue<double>("speed"));
     bool chromatic = Mod::get()->getSettingValue<bool>("chromatic-aberration");
     bool flashEnabled = Mod::get()->getSettingValue<bool>("beat-flash");
     auto customCol = Mod::get()->getSettingValue<cocos2d::ccColor3B>("custom-color");
@@ -75,7 +76,7 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
         program->setUniformLocationWith2f(m_uResolution, winSize.width, winSize.height);
     }
     if (m_uTime != -1) {
-        program->setUniformLocationWith1f(m_uTime, audio->getTime());
+        program->setUniformLocationWith1f(m_uTime, audio->getTime() * speed);
     }
     if (m_uPulse != -1) {
         program->setUniformLocationWith1f(m_uPulse, audio->getPulse());

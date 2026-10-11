@@ -6,13 +6,23 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.3.0",
+	"version": "v1.4.0",
 	"id": "tpdea.menugameshaders",
 	"name": "Menu Game Shaders",
 	"developer": "Tpdea",
 	"description": "Applies music & BPM reactive shaders and visual effects to the main menu background (MenuGameLayer).",
 	"repository": "https://github.com/TpdeaX/MenuGameShaders",
 	"settings": {
+		"builder-title": {
+			"name": "Live Shader Builder",
+			"type": "title"
+		},
+		"shader-builder": {
+			"name": "Open Live Preview",
+			"description": "Opens an in-game popup with a live preview of the shader and real-time sliders / toggles. Changes apply to the menu background instantly.",
+			"type": "custom:shader-builder",
+			"default": false
+		},
 		"enabled": {
 			"name": "Enable Mod",
 			"description": "Toggle menu shaders on or off.",
