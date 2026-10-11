@@ -2,7 +2,6 @@
 #include "ShaderManager.hpp"
 #include "AudioManager.hpp"
 #include "SystemAudioCapture.hpp"
-#include <cmath>
 
 using namespace geode::prelude;
 
@@ -125,15 +124,13 @@ void MenuShaderNode::visit() {
         m_frameSize = frameSize;
         m_viewPortRect = viewPortRect;
 
-        int rtWidth = static_cast<int>(std::ceil(winSize.width));
-        int rtHeight = static_cast<int>(std::ceil(winSize.height));
-
-        if (rtWidth > 0 && rtHeight > 0) {
-            m_renderTexture = CCRenderTexture::create(rtWidth, rtHeight);
+        if (winSize.width > 0.0f && winSize.height > 0.0f) {
+            m_renderTexture = CCRenderTexture::create(winSize.width, winSize.height);
             if (m_renderTexture) {
                 auto sprite = m_renderTexture->getSprite();
                 if (sprite) {
                     sprite->setAnchorPoint({ 0.0f, 0.0f });
+                    sprite->setTextureRect(cocos2d::CCRect(0.0f, 0.0f, winSize.width, winSize.height));
                 }
             }
         }
@@ -202,13 +199,9 @@ void MenuShaderNode::drawShader(cocos2d::CCSize const& winSize) {
     sprite->setShaderProgram(program);
 
     float shake = AudioManager::get()->getShakeOffset();
-    auto spriteSize = sprite->getContentSize();
-    float scaleX = (spriteSize.width > 0.0f) ? (winSize.width / spriteSize.width) : 1.0f;
-    float scaleY = (spriteSize.height > 0.0f) ? (winSize.height / spriteSize.height) : 1.0f;
 
     kmGLPushMatrix();
     kmGLTranslatef(shake, shake * 0.6f, 0.0f);
-    kmGLScalef(scaleX, scaleY, 1.0f);
 
     program->use();
     ShaderManager::get()->setUniforms(program, winSize);
