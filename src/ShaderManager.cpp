@@ -14,14 +14,20 @@ ShaderManager* ShaderManager::get() {
 }
 
 bool ShaderManager::compile() {
-    if (m_compiled && m_program) {
+    if (m_compiled && m_program && m_program->getProgram() != 0 && glIsProgram(m_program->getProgram())) {
         return true;
     }
+
+    if (m_program) {
+        m_program->release();
+        m_program = nullptr;
+    }
+    m_compiled = false;
 
     m_program = new cocos2d::CCGLProgram();
     if (!m_program->initWithVertexShaderByteArray(Shaders::VERTEX_SHADER, Shaders::FRAGMENT_SHADER)) {
         log::error("MenuGameShaders: Failed to initialize vertex / fragment shader");
-        delete m_program;
+        m_program->release();
         m_program = nullptr;
         return false;
     }
@@ -169,3 +175,20 @@ int ShaderManager::getEffectiveStyle() const {
     }
     return static_cast<int>(Mod::get()->getSettingValue<int64_t>("shader-style"));
 }
+
+cocos2d::CCGLProgram* ShaderManager::getProgram() {
+    if (!m_compiled || !m_program || m_program->getProgram() == 0 || !glIsProgram(m_program->getProgram())) {
+        this->compile();
+    }
+    return m_program;
+}
+
+void ShaderManager::reset() {
+    if (m_program) {
+        m_program->release();
+        m_program = nullptr;
+    }
+    m_compiled = false;
+    this->compile();
+}
+

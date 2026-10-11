@@ -39,6 +39,7 @@ public:
     static ShaderManager* get();
 
     bool compile();
+    void reset();
     void setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize const& winSize);
 
     // Picks a new random shader style (used by the shader randomizer).
@@ -47,10 +48,5 @@ public:
     // Returns the shader-style setting, or a random one when randomization is on.
     int getEffectiveStyle() const;
 
-    cocos2d::CCGLProgram* getProgram() {
-        if (!m_compiled) {
-            this->compile();
-        }
-        return m_program;
-    }
+    cocos2d::CCGLProgram* getProgram();
 };
