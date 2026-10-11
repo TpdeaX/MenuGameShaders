@@ -1,4 +1,5 @@
 #include "SystemAudioCapture.hpp"
+#include <Geode/Geode.hpp>
 
 #ifdef _WIN32
 
@@ -48,6 +49,7 @@ struct SystemAudioCapture::Impl {
     std::atomic<bool> hasSignal{ false };
 
     std::thread thread;
+    long long lastAttemptMs = 0;
 
     int fftSize = 2048;
     int hopSize = 1024;
@@ -184,6 +186,7 @@ static void processFrames(SystemAudioCapture::Impl* impl, const unsigned char* d
 static void captureThread(SystemAudioCapture::Impl* impl) {
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr)) {
+        geode::log::error("MenuGameShaders: system audio CoInitializeEx failed (hr=0x{:X})", static_cast<unsigned long>(hr));
         impl->running.store(false);
         return;
     }
@@ -198,11 +201,20 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
     hr = CoCreateInstance(
         kClsidMMDeviceEnumerator, nullptr, CLSCTX_ALL,
         kIidIMMDeviceEnumerator, reinterpret_cast<void**>(&enumerator));
+    if (SUCCEEDED(hr) && !enumerator) {
+        hr = E_FAIL;
+    }
     if (SUCCEEDED(hr)) {
         hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
     }
+    if (SUCCEEDED(hr) && !device) {
+        hr = E_FAIL;
+    }
     if (SUCCEEDED(hr)) {
         hr = device->Activate(kIidIAudioClient, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&audioClient));
+    }
+    if (SUCCEEDED(hr) && !audioClient) {
+        hr = E_FAIL;
     }
     if (SUCCEEDED(hr)) {
         hr = audioClient->GetMixFormat(&mixFormat);
@@ -240,12 +252,16 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
     if (SUCCEEDED(hr)) {
         hr = audioClient->GetService(kIidIAudioCaptureClient, reinterpret_cast<void**>(&captureClient));
     }
+    if (SUCCEEDED(hr) && !captureClient) {
+        hr = E_FAIL;
+    }
     if (SUCCEEDED(hr)) {
         hr = audioClient->Start();
         started = SUCCEEDED(hr);
     }
 
     if (!started) {
+        geode::log::error("MenuGameShaders: system audio setup failed (hr=0x{:X})", static_cast<unsigned long>(hr));
         if (mixFormat) CoTaskMemFree(mixFormat);
         if (captureClient) captureClient->Release();
         if (audioClient) audioClient->Release();
@@ -322,6 +338,21 @@ bool SystemAudioCapture::start() {
     }
     if (m_impl->running.load()) {
         return true;
+    }
+
+    // Cooldown so a device that keeps failing setup doesn't spawn a thread
+    // every frame.
+    const long long now = static_cast<long long>(GetTickCount64());
+    if (now - m_impl->lastAttemptMs < 2000) {
+        return false;
+    }
+    m_impl->lastAttemptMs = now;
+
+    // Reap any previously-finished thread before reassigning. Assigning a new
+    // thread to a still-joinable std::thread calls std::terminate() and would
+    // crash Geometry Dash.
+    if (m_impl->thread.joinable()) {
+        m_impl->thread.join();
     }
 
     m_impl->stopRequested.store(false);
