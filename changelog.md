@@ -4,6 +4,8 @@
 * **Live Shader Builder**: new "Open Live Preview" button in the mod settings (a custom setting, the same pattern Jukebox uses for its index manager) opens an in-game popup with a real-time shader preview and sliders/toggles for Style, Intensity, Distortion, Tint Mode, Custom Shape, Custom Speed, Custom Scale, Chromatic Aberration and Beat Flash. Changes apply to the menu background instantly, and picking a style disables the randomizer so your choice sticks.
 * **Live Beat Synchronization**: the live shader preview now pulses and reacts to music kicks and spectral transients in real-time, backed by continuous BPM tempo sync.
 * **Layout Polish**: fixed popup element positioning, button clipping in settings, and slider margins so controls stay cleanly framed inside the modal without overflowing.
+* **Shockwave Ambient Wave Toggle**: new setting to enable/disable the looping time-based shockwave in Style 0, allowing it to trigger strictly on music beats without periodic idle waves.
+* **Cursor Tracking Toggle**: new setting to toggle mouse parallax center-shifting on/off across all shaders.
 
 ## v1.3.0
 * **New shader — Bass Subwoofer (12)**: an elliptical speaker cone that pumps toward the camera on bass, the opposite of the receding hyperspace tunnel.

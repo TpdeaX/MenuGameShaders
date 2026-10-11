@@ -47,6 +47,7 @@ bool ShaderManager::compile() {
     m_uChromatic = m_program->getUniformLocationForName("u_chromatic");
     m_uBeatFlash = m_program->getUniformLocationForName("u_beatFlash");
     m_uMouse = m_program->getUniformLocationForName("u_mouse");
+    m_uShockwaveAmbient = m_program->getUniformLocationForName("u_shockwaveAmbient");
     m_uCustomShape = m_program->getUniformLocationForName("u_customShape");
     m_uCustomColor1 = m_program->getUniformLocationForName("u_customColor1");
     m_uCustomColor2 = m_program->getUniformLocationForName("u_customColor2");
@@ -118,12 +119,21 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
         program->setUniformLocationWith1f(m_uBeatFlash, flashVal);
     }
     if (m_uMouse != -1) {
-        auto mousePos = cocos::getMousePos();
-        auto director = cocos2d::CCDirector::sharedDirector();
-        auto refSize = director ? director->getWinSize() : winSize;
-        float normX = std::clamp(mousePos.x / std::max(refSize.width, 1.0f), 0.0f, 1.0f);
-        float normY = std::clamp(mousePos.y / std::max(refSize.height, 1.0f), 0.0f, 1.0f);
-        program->setUniformLocationWith2f(m_uMouse, normX, normY);
+        bool cursorTracking = Mod::get()->getSettingValue<bool>("cursor-tracking");
+        if (cursorTracking) {
+            auto mousePos = cocos::getMousePos();
+            auto director = cocos2d::CCDirector::sharedDirector();
+            auto refSize = director ? director->getWinSize() : winSize;
+            float normX = std::clamp(mousePos.x / std::max(refSize.width, 1.0f), 0.0f, 1.0f);
+            float normY = std::clamp(mousePos.y / std::max(refSize.height, 1.0f), 0.0f, 1.0f);
+            program->setUniformLocationWith2f(m_uMouse, normX, normY);
+        } else {
+            program->setUniformLocationWith2f(m_uMouse, 0.5f, 0.5f);
+        }
+    }
+    if (m_uShockwaveAmbient != -1) {
+        bool ambient = Mod::get()->getSettingValue<bool>("shockwave-ambient");
+        program->setUniformLocationWith1f(m_uShockwaveAmbient, ambient ? 1.0f : 0.0f);
     }
 
     // Custom style (13) uniforms

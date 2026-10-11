@@ -24,6 +24,7 @@ private:
     GLint m_uChromatic = -1;
     GLint m_uBeatFlash = -1;
     GLint m_uMouse = -1;
+    GLint m_uShockwaveAmbient = -1;
     GLint m_uCustomShape = -1;
     GLint m_uCustomColor1 = -1;
     GLint m_uCustomColor2 = -1;

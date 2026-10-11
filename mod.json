@@ -208,6 +208,18 @@
 			"description": "Add subtle RGB channel separation along wave edges on beat.",
 			"type": "bool",
 			"default": true
+		},
+		"shockwave-ambient": {
+			"name": "Shockwave Ambient Pulse",
+			"description": "Enables the periodic looping shockwave that triggers automatically over time even without music beats.",
+			"type": "bool",
+			"default": false
+		},
+		"cursor-tracking": {
+			"name": "Cursor Tracking",
+			"description": "Shifts the focal center of shader effects based on mouse cursor position.",
+			"type": "bool",
+			"default": true
 		}
 	}
 }

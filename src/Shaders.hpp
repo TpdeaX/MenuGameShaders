@@ -46,6 +46,7 @@ uniform vec3 u_customColor;
 uniform float u_chromatic;    // 0.0 or 1.0
 uniform float u_beatFlash;    // Instant kick strobe
 uniform vec2 u_mouse;         // Cursor coordinates
+uniform float u_shockwaveAmbient; // Enable periodic ambient wave (0.0 or 1.0)
 uniform int u_customShape;    // Custom style base shape (0..5)
 uniform vec3 u_customColor1;  // Custom style gradient color A
 uniform vec3 u_customColor2;  // Custom style gradient color B
@@ -67,14 +68,17 @@ vec4 sampleChromatic(sampler2D tex, vec2 uv, float offset) {
 }
 
 // Style 0: Shockwave Pulse (RobTop GD 2.2 Sneak Peek style radial ripples)
-vec2 shockwaveDistort(vec2 uv, vec2 center, float time, float pulse, float strength) {
+vec2 shockwaveDistort(vec2 uv, vec2 center, float time, float pulse, float strength, float ambient) {
     vec2 diff = uv - center;
     float aspect = u_resolution.x / max(u_resolution.y, 1.0);
     diff.x *= aspect;
     float dist = length(diff);
 
-    float waveProgress = fract(time * 0.45);
-    float ring1 = smoothstep(0.12, 0.0, abs(dist - waveProgress * 1.3));
+    float ring1 = 0.0;
+    if (ambient > 0.5) {
+        float waveProgress = fract(time * 0.45);
+        ring1 = smoothstep(0.12, 0.0, abs(dist - waveProgress * 1.3));
+    }
     float pulseRadius = (1.0 - clamp(pulse * 0.7, 0.0, 1.0)) * 0.9;
     float ring2 = smoothstep(0.09, 0.0, abs(dist - pulseRadius)) * pulse;
 
@@ -309,7 +313,7 @@ void main() {
     // Apply distortion based on selected style
     vec2 distortedUV = uv;
     if (u_style == 0) {
-        distortedUV = shockwaveDistort(uv, center, u_time, u_pulse, u_distortion);
+        distortedUV = shockwaveDistort(uv, center, u_time, u_pulse, u_distortion, u_shockwaveAmbient);
     } else if (u_style == 1) {
         distortedUV = audioWaveDistort(uv, u_time, u_bass, u_pulse, u_distortion);
     } else if (u_style == 2) {

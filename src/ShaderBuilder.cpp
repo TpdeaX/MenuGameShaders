@@ -334,7 +334,7 @@ void ShaderBuilderPopup::buildControls() {
         m_rowY -= ROW_HEIGHT + ROW_GAP;
     };
 
-    int totalRows = 8 + 2;  // 8 sliders + 2 toggles
+    int totalRows = 8 + 4;  // 8 sliders + 4 toggles
     float contentH = CONTENT_PAD * 2 + totalRows * ROW_HEIGHT + (totalRows - 1) * ROW_GAP;
     m_list->m_contentLayer->setContentSize({m_list->getContentWidth(), contentH});
     m_rowY = contentH - CONTENT_PAD;
@@ -404,6 +404,8 @@ void ShaderBuilderPopup::buildControls() {
     std::vector<ToggleSpec> toggles = {
         {"Chromatic Aberration", "chromatic-aberration", mod->getSettingValue<bool>("chromatic-aberration")},
         {"Beat Flash", "beat-flash", mod->getSettingValue<bool>("beat-flash")},
+        {"Ambient Shockwave", "shockwave-ambient", mod->getSettingValue<bool>("shockwave-ambient")},
+        {"Cursor Tracking", "cursor-tracking", mod->getSettingValue<bool>("cursor-tracking")},
     };
 
     for (auto const& spec : toggles) {
