@@ -83,16 +83,12 @@ protected:
     std::vector<SliderRow> m_sliderRows;
     std::vector<ToggleRow> m_toggleRows;
     float m_rowY = 0.0f;
-    FLAlertLayer* m_parentSettingsPopup = nullptr;
 
     bool init();
     void buildControls();
     void onSlider(cocos2d::CCObject* sender);
     void onToggle(cocos2d::CCObject* sender);
-    void syncParentSettings();
-    void onClose(cocos2d::CCObject* sender) override;
 
 public:
     static ShaderBuilderPopup* create();
-    void setParentSettingsPopup(FLAlertLayer* popup) { m_parentSettingsPopup = popup; }
 };

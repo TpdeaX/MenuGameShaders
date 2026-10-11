@@ -131,15 +131,7 @@ bool ShaderBuilderSettingNode::init(std::shared_ptr<ShaderBuilderSetting> const&
 }
 
 void ShaderBuilderSettingNode::onOpen(CCObject*) {
-    auto popup = ShaderBuilderPopup::create();
-    if (popup) {
-        CCNode* p = this->getParent();
-        while (p && !typeinfo_cast<FLAlertLayer*>(p)) {
-            p = p->getParent();
-        }
-        popup->setParentSettingsPopup(typeinfo_cast<FLAlertLayer*>(p));
-        popup->show();
-    }
+    ShaderBuilderPopup::create()->show();
 }
 
 ShaderBuilderSettingNode* ShaderBuilderSettingNode::create(
@@ -484,9 +476,8 @@ void ShaderBuilderPopup::onSlider(CCObject* sender) {
             row.label->setString(formatValue(row.name, value, false).c_str());
         }
 
-        // Immediately persist settings to disk and sync with parent menu
+        // Immediately persist settings to disk
         (void)Mod::get()->saveData();
-        this->syncParentSettings();
         break;
     }
 }
@@ -505,33 +496,8 @@ void ShaderBuilderPopup::onToggle(CCObject* sender) {
         bool current = Mod::get()->getSettingValue<bool>(row.key);
         Mod::get()->setSettingValue<bool>(row.key, !current);
 
-        // Immediately persist settings to disk and sync with parent menu
+        // Immediately persist settings to disk
         (void)Mod::get()->saveData();
-        this->syncParentSettings();
         break;
     }
-}
-
-void ShaderBuilderPopup::syncParentSettings() {
-    if (!m_parentSettingsPopup) return;
-
-    std::function<void(cocos2d::CCNode*)> updateNodes = [&](cocos2d::CCNode* node) {
-        if (!node) return;
-        if (auto sNode = typeinfo_cast<geode::SettingNodeV3*>(node)) {
-            sNode->updateState(nullptr);
-        }
-        auto children = node->getChildren();
-        if (children) {
-            for (int i = 0; i < children->count(); ++i) {
-                updateNodes(static_cast<cocos2d::CCNode*>(children->objectAtIndex(i)));
-            }
-        }
-    };
-    updateNodes(m_parentSettingsPopup);
-}
-
-void ShaderBuilderPopup::onClose(CCObject* sender) {
-    this->syncParentSettings();
-    (void)Mod::get()->saveData();
-    Popup::onClose(sender);
 }
