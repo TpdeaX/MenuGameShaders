@@ -12,17 +12,15 @@
 #include <audioclient.h>
 #include <mmreg.h>
 #include <cstdint>
+#include <cstring>
 #include <cmath>
 #include <thread>
 #include <vector>
 
 // Local GUID definitions to avoid any extra link dependencies.
-static const GUID kSubTypePCM = {
-    0x00000001, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x3B, 0x89, 0x71 }
-};
-static const GUID kSubTypeIEEEFloat = {
-    0x00000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x3B, 0x89, 0x71 }
-};
+// WAVEFORMATEXTENSIBLE subtype GUIDs are matched by their Data1 field:
+//   0x00000001 = KSDATAFORMAT_SUBTYPE_PCM
+//   0x00000003 = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT
 // {BCDE0395-E52F-467C-8E3D-C4579291692E}
 static const GUID kClsidMMDeviceEnumerator = {
     0xBCDE0395, 0xE52F, 0x467C, { 0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E }
@@ -172,6 +170,15 @@ static void processFrames(SystemAudioCapture::Impl* impl, const unsigned char* d
             }
             pushSample(impl, acc / static_cast<float>(ch));
         }
+    } else if (impl->bytesPerSample == 4) {
+        const std::int32_t* p = reinterpret_cast<const std::int32_t*>(data);
+        for (unsigned int f = 0; f < frames; ++f) {
+            float acc = 0.0f;
+            for (int c = 0; c < ch; ++c) {
+                acc += static_cast<float>(p[f * ch + c]) / 2147483648.0f;
+            }
+            pushSample(impl, acc / static_cast<float>(ch));
+        }
     } else {
         const std::int16_t* p = reinterpret_cast<const std::int16_t*>(data);
         for (unsigned int f = 0; f < frames; ++f) {
@@ -247,21 +254,44 @@ static void captureThread(SystemAudioCapture::Impl* impl) {
         impl->isFloat = false;
         impl->bytesPerSample = mixFormat->wBitsPerSample / 8;
 
+        // For WAVE_FORMAT_EXTENSIBLE the subtype GUID starts right after
+        // WAVEFORMATEX + wValidBitsPerSample + dwChannelMask. That is byte 24
+        // when WAVEFORMATEX is 18 bytes as documented, but some toolchains pad
+        // it to 20 and report 28. Probe both by the GUID's Data1 field
+        // (1 = KSDATAFORMAT_SUBTYPE_PCM, 3 = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT).
+        const unsigned char* rawFmt = reinterpret_cast<const unsigned char*>(mixFormat);
+        auto subtypeData1 = [rawFmt](int off) -> unsigned long {
+            unsigned long v = 0;
+            std::memcpy(&v, rawFmt + off, sizeof(v));
+            return v;
+        };
+
         if (mixFormat->wFormatTag == WAVE_FORMAT_IEEE_FLOAT) {
             impl->isFloat = true;
             impl->bytesPerSample = 4;
+        } else if (mixFormat->wFormatTag == WAVE_FORMAT_PCM) {
+            impl->isFloat = false;
         } else if (mixFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-            auto* ext = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(mixFormat);
-            if (IsEqualGUID(ext->SubFormat, kSubTypeIEEEFloat)) {
+            const unsigned long d1a = subtypeData1(24);
+            // Only read the padded-offset candidate when the buffer is big enough.
+            const unsigned long d1b = (mixFormat->cbSize >= 22) ? subtypeData1(28) : 0;
+            geode::log::info("MenuGameShaders: subtype Data1 @24=0x{:X} @28=0x{:X}", d1a, d1b);
+            if (d1a == 3 || d1b == 3) {
                 impl->isFloat = true;
                 impl->bytesPerSample = 4;
-            } else if (IsEqualGUID(ext->SubFormat, kSubTypePCM)) {
+            } else if (d1a == 1 || d1b == 1) {
                 impl->isFloat = false;
+            } else {
+                // Unknown subtype: Windows shared-mode mix formats are 32-bit
+                // float in practice, so fall back to that for 4-byte samples.
+                impl->isFloat = (impl->bytesPerSample == 4);
+                geode::log::warn("MenuGameShaders: unknown subtype, assuming {}",
+                                 impl->isFloat ? "float32" : "pcm16");
             }
         }
 
         const bool supported = (impl->isFloat && impl->bytesPerSample == 4) ||
-                               (!impl->isFloat && impl->bytesPerSample == 2);
+                               (!impl->isFloat && (impl->bytesPerSample == 2 || impl->bytesPerSample == 4));
         if (impl->sampleRate <= 0 || impl->channels <= 0 || !supported) {
             geode::log::warn(
                 "MenuGameShaders: unsupported mix format (float={} bytesPerSample={} channels={} rate={})",

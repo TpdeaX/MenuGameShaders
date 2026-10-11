@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.2
+* **Fixed System Audio format detection on Windows**: the `WAVEFORMATEXTENSIBLE` subtype GUID was read through the struct at the wrong offset, so 32-bit 48 kHz mix formats were reported as unsupported (`float=false bytesPerSample=4`). The subtype is now read by its raw byte offset (probing 24 and 28) and 32-bit integer PCM is supported in addition to float32 and 16-bit PCM.
+
 ## v1.2.1
 * **Fixed System Audio on Windows**: the `MMDeviceEnumerator` CLSID had a typo (`467E` instead of `467C`), so system-audio capture always failed with `REGDB_E_CLASSNOTREG` (0x80040154).
 * **Fixed crash when enabling System Audio**: the capture thread is now joined before being restarted (reassigning a joinable `std::thread` called `std::terminate()`), plus a 2 s retry cooldown and defensive COM null-checks.
