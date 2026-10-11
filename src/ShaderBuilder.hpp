@@ -10,6 +10,7 @@
 #include <Geode/ui/ScrollLayer.hpp>
 #include <Geode/binding/Slider.hpp>
 #include <Geode/binding/CCMenuItemToggler.hpp>
+#include <Geode/binding/FLAlertLayer.hpp>
 
 // ---------------------------------------------------------------------------
 // Live Shader Builder
@@ -82,7 +83,7 @@ protected:
     std::vector<SliderRow> m_sliderRows;
     std::vector<ToggleRow> m_toggleRows;
     float m_rowY = 0.0f;
-    cocos2d::CCNode* m_parentSettingsPopup = nullptr;
+    FLAlertLayer* m_parentSettingsPopup = nullptr;
 
     bool init();
     void buildControls();
@@ -92,5 +93,5 @@ protected:
 
 public:
     static ShaderBuilderPopup* create();
-    void setParentSettingsPopup(cocos2d::CCNode* popup) { m_parentSettingsPopup = popup; }
+    void setParentSettingsPopup(FLAlertLayer* popup) { m_parentSettingsPopup = popup; }
 };

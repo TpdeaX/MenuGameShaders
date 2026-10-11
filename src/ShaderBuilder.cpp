@@ -137,7 +137,7 @@ void ShaderBuilderSettingNode::onOpen(CCObject*) {
         while (p && !typeinfo_cast<FLAlertLayer*>(p)) {
             p = p->getParent();
         }
-        popup->setParentSettingsPopup(p);
+        popup->setParentSettingsPopup(typeinfo_cast<FLAlertLayer*>(p));
         popup->show();
     }
 }
