@@ -25,6 +25,13 @@ $ErrorActionPreference = 'Stop'
 $RepoDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
 $GdModsDir = 'C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash\geode\mods'
 $Headers   = @{ 'User-Agent' = 'geode-deploy-script' }
+try {
+    $cred = "protocol=https`nhost=github.com" | git credential fill 2>$null
+    $token = ($cred | Where-Object { $_ -match '^password=(.+)' } | ForEach-Object { $Matches[1] })
+    if ($token) {
+        $Headers['Authorization'] = "Bearer $token"
+    }
+} catch {}
 
 # ---- Read mod metadata from mod.json -------------------------------------
 $mod = Get-Content -Raw (Join-Path $RepoDir 'mod.json') | ConvertFrom-Json
