@@ -188,20 +188,29 @@ void AudioManager::update(float dt) {
         detectedKick = true;
     }
 
-    // --- Continuous BPM Fallback / Clock Sync (keeps rhythm locked) ---
+    // --- Continuous BPM Fallback / Clock Sync (keeps rhythm locked while audio is playing) ---
     float bpm = static_cast<float>(Mod::get()->getSettingValue<double>("bpm"));
     float bps = std::clamp(bpm / 60.0f, 0.5f, 5.0f);
     float beatInterval = 1.0f / bps;
-    m_bpmClock += dt * bps;
 
-    if (m_bpmClock >= 1.0f) {
-        m_bpmClock -= 1.0f;
-        // If no kick was triggered naturally for at least 80% of a beat interval,
-        // fire the rhythmic beat pulse so it ALWAYS stays grooving to the tempo!
-        if (!detectedKick && (m_time - m_lastPeakTime) > (beatInterval * 0.8f)) {
-            m_kickPulse = 0.9f * pulseMult;
-            m_lastPeakTime = m_time;
+    if (hasAudioSignal) {
+        m_bpmClock += dt * bps;
+        if (m_bpmClock >= 1.0f) {
+            m_bpmClock -= 1.0f;
+            // If music is playing but a quiet part has no sharp transient,
+            // fire rhythmic pulse so it stays locked with the music tempo
+            if (!detectedKick && (m_time - m_lastPeakTime) > (beatInterval * 0.8f)) {
+                m_kickPulse = 0.9f * pulseMult;
+                m_lastPeakTime = m_time;
+            }
         }
+    } else {
+        // Complete silence: no music playing. Reset clock and quickly decay bands.
+        m_bpmClock = 0.0f;
+        m_subBass = std::max(0.0f, m_subBass - dt * 4.0f);
+        m_bass = std::max(0.0f, m_bass - dt * 4.0f);
+        m_mids = std::max(0.0f, m_mids - dt * 4.0f);
+        m_treble = std::max(0.0f, m_treble - dt * 4.0f);
     }
 
     // Exponential snappy decay for kick punch

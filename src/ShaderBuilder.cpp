@@ -9,6 +9,7 @@
 #include <Geode/binding/SliderThumb.hpp>
 #include <cocos-ext.h>
 
+#include <Geode/ui/GeodeUI.hpp>
 #include "ShaderManager.hpp"
 #include "AudioManager.hpp"
 
@@ -130,7 +131,15 @@ bool ShaderBuilderSettingNode::init(std::shared_ptr<ShaderBuilderSetting> const&
 }
 
 void ShaderBuilderSettingNode::onOpen(CCObject*) {
-    ShaderBuilderPopup::create()->show();
+    auto popup = ShaderBuilderPopup::create();
+    if (popup) {
+        CCNode* p = this->getParent();
+        while (p && !typeinfo_cast<FLAlertLayer*>(p)) {
+            p = p->getParent();
+        }
+        popup->setParentSettingsPopup(p);
+        popup->show();
+    }
 }
 
 ShaderBuilderSettingNode* ShaderBuilderSettingNode::create(
@@ -334,7 +343,7 @@ void ShaderBuilderPopup::buildControls() {
         m_rowY -= ROW_HEIGHT + ROW_GAP;
     };
 
-    int totalRows = 8 + 4;  // 8 sliders + 4 toggles
+    int totalRows = 8 + 5;  // 8 sliders + 5 toggles
     float contentH = CONTENT_PAD * 2 + totalRows * ROW_HEIGHT + (totalRows - 1) * ROW_GAP;
     m_list->m_contentLayer->setContentSize({m_list->getContentWidth(), contentH});
     m_rowY = contentH - CONTENT_PAD;
@@ -405,6 +414,7 @@ void ShaderBuilderPopup::buildControls() {
         {"Chromatic Aberration", "chromatic-aberration", mod->getSettingValue<bool>("chromatic-aberration")},
         {"Beat Flash", "beat-flash", mod->getSettingValue<bool>("beat-flash")},
         {"Ambient Shockwave", "shockwave-ambient", mod->getSettingValue<bool>("shockwave-ambient")},
+        {"Bulge Outward", "bulge-outward", mod->getSettingValue<bool>("bulge-outward")},
         {"Cursor Tracking", "cursor-tracking", mod->getSettingValue<bool>("cursor-tracking")},
     };
 
@@ -438,6 +448,12 @@ void ShaderBuilderPopup::buildControls() {
         trow.key = spec.key;
         m_toggleRows.push_back(trow);
     }
+
+    // Scroll to the very beginning so the list opens at the top
+    m_list->scrollToTop();
+    if (contentH > m_list->getContentHeight()) {
+        m_list->m_contentLayer->setPositionY(m_list->getContentHeight() - contentH);
+    }
 }
 
 void ShaderBuilderPopup::onSlider(CCObject* sender) {
@@ -467,6 +483,9 @@ void ShaderBuilderPopup::onSlider(CCObject* sender) {
             Mod::get()->setSettingValue<double>(row.key, (double)value);
             row.label->setString(formatValue(row.name, value, false).c_str());
         }
+
+        // Immediately persist settings to disk
+        (void)Mod::get()->saveData();
         break;
     }
 }
@@ -484,6 +503,23 @@ void ShaderBuilderPopup::onToggle(CCObject* sender) {
         // before or after the callback fires.
         bool current = Mod::get()->getSettingValue<bool>(row.key);
         Mod::get()->setSettingValue<bool>(row.key, !current);
+
+        // Immediately persist settings to disk
+        (void)Mod::get()->saveData();
         break;
+    }
+}
+
+void ShaderBuilderPopup::onClose(CCObject* sender) {
+    // 1. Immediately persist all mod settings to disk
+    (void)Mod::get()->saveData();
+
+    auto parent = m_parentSettingsPopup;
+    Popup::onClose(sender);
+
+    // 2. If opened from Geode's ModSettingsPopup, refresh it so its UI displays the new values
+    if (parent && parent->getParent()) {
+        parent->keyBackClicked();
+        geode::openSettingsPopup(Mod::get());
     }
 }

@@ -6,7 +6,7 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.4.1",
+	"version": "v1.4.2",
 	"id": "tpdea.menugameshaders",
 	"name": "Menu Game Shaders",
 	"developer": "Tpdea",
@@ -214,6 +214,12 @@
 			"description": "Enables the periodic looping shockwave that triggers automatically over time even without music beats.",
 			"type": "bool",
 			"default": false
+		},
+		"bulge-outward": {
+			"name": "Beat Bulge Outward",
+			"description": "When enabled, the Beat Bulge shader expands outward (magnifying bubble pulse). When disabled, it pinches inward.",
+			"type": "bool",
+			"default": true
 		},
 		"cursor-tracking": {
 			"name": "Cursor Tracking",

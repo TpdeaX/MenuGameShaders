@@ -54,6 +54,7 @@ bool ShaderManager::compile() {
     m_uBeatFlash = m_program->getUniformLocationForName("u_beatFlash");
     m_uMouse = m_program->getUniformLocationForName("u_mouse");
     m_uShockwaveAmbient = m_program->getUniformLocationForName("u_shockwaveAmbient");
+    m_uBulgeOutward = m_program->getUniformLocationForName("u_bulgeOutward");
     m_uCustomShape = m_program->getUniformLocationForName("u_customShape");
     m_uCustomColor1 = m_program->getUniformLocationForName("u_customColor1");
     m_uCustomColor2 = m_program->getUniformLocationForName("u_customColor2");
@@ -140,6 +141,10 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
     if (m_uShockwaveAmbient != -1) {
         bool ambient = Mod::get()->getSettingValue<bool>("shockwave-ambient");
         program->setUniformLocationWith1f(m_uShockwaveAmbient, ambient ? 1.0f : 0.0f);
+    }
+    if (m_uBulgeOutward != -1) {
+        bool outward = Mod::get()->getSettingValue<bool>("bulge-outward");
+        program->setUniformLocationWith1f(m_uBulgeOutward, outward ? 1.0f : 0.0f);
     }
 
     // Custom style (13) uniforms

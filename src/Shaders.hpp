@@ -47,6 +47,7 @@ uniform float u_chromatic;    // 0.0 or 1.0
 uniform float u_beatFlash;    // Instant kick strobe
 uniform vec2 u_mouse;         // Cursor coordinates
 uniform float u_shockwaveAmbient; // Enable periodic ambient wave (0.0 or 1.0)
+uniform float u_bulgeOutward;      // 1.0 = outward expansion, 0.0 = inward pinch
 uniform int u_customShape;    // Custom style base shape (0..5)
 uniform vec3 u_customColor1;  // Custom style gradient color A
 uniform vec3 u_customColor2;  // Custom style gradient color B
@@ -97,13 +98,14 @@ vec2 audioWaveDistort(vec2 uv, float time, float bass, float pulse, float streng
     return uv + vec2(wave1 + wave3, wave2) * strength;
 }
 
-// Style 2: Beat Bulge & Warp (Pinch / bulge expansion on beat)
-vec2 beatBulgeDistort(vec2 uv, vec2 center, float pulse, float bass, float strength) {
+// Style 2: Beat Bulge & Warp (Pinch or Bulge expansion on beat)
+vec2 beatBulgeDistort(vec2 uv, vec2 center, float pulse, float bass, float strength, float outward) {
     vec2 diff = uv - center;
     float dist = length(diff);
     float bulge = (pulse * 0.9 + bass * 0.6) * strength;
     float factor = 1.0 - smoothstep(0.0, 0.65, dist);
-    return uv + diff * factor * bulge * 0.25;
+    float dir = (outward > 0.5) ? -1.0 : 1.0;
+    return uv + diff * (factor * bulge * 0.30 * dir);
 }
 
 // Style 3: Neon Chromatic Beat (Distortion driven directly by beat kick)
@@ -246,7 +248,7 @@ vec2 customDistort(vec2 uv, vec2 center, float time, float bass, float mids, flo
     } else if (shape == 1) {
         return audioWaveDistort(uv, time, bass, pulse, scale);
     } else if (shape == 2) {
-        return beatBulgeDistort(uv, center, pulse, bass, scale);
+        return beatBulgeDistort(uv, center, pulse, bass, scale, u_bulgeOutward);
     } else if (shape == 3) {
         return kaleidoscopeDistort(uv, center, time, pulse, scale);
     } else if (shape == 4) {
@@ -317,7 +319,7 @@ void main() {
     } else if (u_style == 1) {
         distortedUV = audioWaveDistort(uv, u_time, u_bass, u_pulse, u_distortion);
     } else if (u_style == 2) {
-        distortedUV = beatBulgeDistort(uv, center, u_pulse, u_bass, u_distortion);
+        distortedUV = beatBulgeDistort(uv, center, u_pulse, u_bass, u_distortion, u_bulgeOutward);
     } else if (u_style == 3) {
         distortedUV = neonBeatDistort(uv, center, u_time, u_pulse, u_distortion);
     } else if (u_style == 4) {
