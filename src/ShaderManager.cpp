@@ -1,5 +1,6 @@
 #include "ShaderManager.hpp"
 #include "AudioManager.hpp"
+#include <random>
 
 using namespace geode::prelude;
 
@@ -46,6 +47,11 @@ bool ShaderManager::compile() {
     m_uChromatic = m_program->getUniformLocationForName("u_chromatic");
     m_uBeatFlash = m_program->getUniformLocationForName("u_beatFlash");
     m_uMouse = m_program->getUniformLocationForName("u_mouse");
+    m_uCustomShape = m_program->getUniformLocationForName("u_customShape");
+    m_uCustomColor1 = m_program->getUniformLocationForName("u_customColor1");
+    m_uCustomColor2 = m_program->getUniformLocationForName("u_customColor2");
+    m_uCustomSpeed = m_program->getUniformLocationForName("u_customSpeed");
+    m_uCustomScale = m_program->getUniformLocationForName("u_customScale");
 
     m_compiled = true;
     log::info("MenuGameShaders: Advanced shaders compiled and linked successfully");
@@ -57,7 +63,7 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
 
     auto audio = AudioManager::get();
 
-    int style = static_cast<int>(Mod::get()->getSettingValue<int64_t>("shader-style"));
+    int style = getEffectiveStyle();
     int colorMode = static_cast<int>(Mod::get()->getSettingValue<int64_t>("color-tint-mode"));
     float intensity = static_cast<float>(Mod::get()->getSettingValue<double>("pulse-intensity"));
     float distortion = static_cast<float>(Mod::get()->getSettingValue<double>("distortion-strength"));
@@ -116,4 +122,37 @@ void ShaderManager::setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize c
         float normY = std::clamp(mousePos.y / std::max(winSize.height, 1.0f), 0.0f, 1.0f);
         program->setUniformLocationWith2f(m_uMouse, normX, normY);
     }
+
+    // Custom style (13) uniforms
+    if (m_uCustomShape != -1) {
+        program->setUniformLocationWith1i(m_uCustomShape, static_cast<int>(Mod::get()->getSettingValue<int64_t>("custom-shape")));
+    }
+    if (m_uCustomColor1 != -1) {
+        auto c1 = Mod::get()->getSettingValue<cocos2d::ccColor3B>("custom-color1");
+        program->setUniformLocationWith3f(m_uCustomColor1, static_cast<float>(c1.r) / 255.0f, static_cast<float>(c1.g) / 255.0f, static_cast<float>(c1.b) / 255.0f);
+    }
+    if (m_uCustomColor2 != -1) {
+        auto c2 = Mod::get()->getSettingValue<cocos2d::ccColor3B>("custom-color2");
+        program->setUniformLocationWith3f(m_uCustomColor2, static_cast<float>(c2.r) / 255.0f, static_cast<float>(c2.g) / 255.0f, static_cast<float>(c2.b) / 255.0f);
+    }
+    if (m_uCustomSpeed != -1) {
+        program->setUniformLocationWith1f(m_uCustomSpeed, static_cast<float>(Mod::get()->getSettingValue<double>("custom-speed")));
+    }
+    if (m_uCustomScale != -1) {
+        program->setUniformLocationWith1f(m_uCustomScale, static_cast<float>(Mod::get()->getSettingValue<double>("custom-scale")));
+    }
+}
+
+void ShaderManager::rerollRandomStyle() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 13);
+    m_randomStyle = dist(gen);
+}
+
+int ShaderManager::getEffectiveStyle() const {
+    if (Mod::get()->getSettingValue<bool>("randomize-shaders")) {
+        return m_randomStyle;
+    }
+    return static_cast<int>(Mod::get()->getSettingValue<int64_t>("shader-style"));
 }

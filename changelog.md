@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.0
+* **New shader — Bass Subwoofer (12)**: an elliptical speaker cone that pumps toward the camera on bass, the opposite of the receding hyperspace tunnel.
+* **New shader — Custom Builder (13)**: a fully tunable shader with its own base shape (rings/waves/bulge/kaleidoscope/vortex/tunnel), two gradient colors, speed and scale.
+* **Shader Randomizer**: new "Randomize Shaders" toggle picks a random style every time the menu opens.
+* **Fixed silence fallback**: the BPM fallback no longer fakes beats after ~5 seconds of genuine silence, so a muted game stops pulsing.
+
 ## v1.2.2
 * **Fixed System Audio format detection on Windows**: the `WAVEFORMATEXTENSIBLE` subtype GUID was read through the struct at the wrong offset, so 32-bit 48 kHz mix formats were reported as unsupported (`float=false bytesPerSample=4`). The subtype is now read by its raw byte offset (probing 24 and 28) and 32-bit integer PCM is supported in addition to float32 and 16-bit PCM.
 

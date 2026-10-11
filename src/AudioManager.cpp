@@ -177,6 +177,13 @@ void AudioManager::update(float dt) {
         detectedKick = true;
     }
 
+    // --- Silence tracking (no real audio signal) ---
+    if (hasAudioSignal) {
+        m_silenceTime = 0.0f;
+    } else {
+        m_silenceTime += dt;
+    }
+
     // --- BPM Fallback / Clock Sync (keeps rhythm if music is quiet) ---
     float bpm = static_cast<float>(Mod::get()->getSettingValue<double>("bpm"));
     float bps = std::clamp(bpm / 60.0f, 0.5f, 5.0f);
@@ -184,7 +191,9 @@ void AudioManager::update(float dt) {
 
     if (m_bpmClock >= 1.0f) {
         m_bpmClock -= 1.0f;
-        if (!detectedKick && !hasAudioSignal && (m_time - m_lastPeakTime) > 0.22f) {
+        // Stop faking beats after ~5s of genuine silence, so a muted game
+        // doesn't keep pulsing as if audio were playing.
+        if (!detectedKick && !hasAudioSignal && m_silenceTime < 5.0f && (m_time - m_lastPeakTime) > 0.22f) {
             m_kickPulse = 0.85f * pulseMult;
             m_lastPeakTime = m_time;
         }

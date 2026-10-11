@@ -6,7 +6,7 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.2.2",
+	"version": "v1.3.0",
 	"id": "tpdea.menugameshaders",
 	"name": "Menu Game Shaders",
 	"developer": "Tpdea",
@@ -21,15 +21,21 @@
 		},
 		"shader-style": {
 			"name": "Shader Style",
-			"description": "Select the visual shader style:\n0. Shockwave Pulse (GD 2.2 Sneak Peek style)\n1. Audio Waves (Sound frequency ripples)\n2. Beat Bulge & Warp (Pinch / bulge pulse)\n3. Neon Chromatic Beat (RGB split)\n4. Glitch & Scanline Pulse\n5. Liquid Ripples (Dreamy water waves)\n6. Radial Audio Equalizer (Pulsing frequency ring)\n7. Hyperspace Warp Tunnel (Cosmic speed rush)\n8. Retro CRT Arcade / Cyberpunk (Scanlines & curvature)\n9. Kaleidoscope Dimension (8-fold crystal symmetry)\n10. Pixel Crunch Matrix (8-Bit mosaic dither)\n11. Gravitational Vortex / Black Hole (Hypnotic twist)",
+			"description": "Select the visual shader style:\n0. Shockwave Pulse (GD 2.2 Sneak Peek style)\n1. Audio Waves (Sound frequency ripples)\n2. Beat Bulge & Warp (Pinch / bulge pulse)\n3. Neon Chromatic Beat (RGB split)\n4. Glitch & Scanline Pulse\n5. Liquid Ripples (Dreamy water waves)\n6. Radial Audio Equalizer (Pulsing frequency ring)\n7. Hyperspace Warp Tunnel (Cosmic speed rush)\n8. Retro CRT Arcade / Cyberpunk (Scanlines & curvature)\n9. Kaleidoscope Dimension (8-fold crystal symmetry)\n10. Pixel Crunch Matrix (8-Bit mosaic dither)\n11. Gravitational Vortex / Black Hole (Hypnotic twist)\n12. Bass Subwoofer (elliptical speaker pumping toward you)\n13. Custom Builder (tunable with the Custom Style settings below)",
 			"type": "int",
 			"default": 0,
 			"min": 0,
-			"max": 11,
+			"max": 13,
 			"control": {
 				"arrows": true,
 				"slider": true
 			}
+		},
+		"randomize-shaders": {
+			"name": "Randomize Shaders",
+			"description": "Pick a random shader style every time the menu opens (overrides Shader Style).",
+			"type": "bool",
+			"default": false
 		},
 		"audio-reactive": {
 			"name": "Music & Beat Reactivity",
@@ -138,6 +144,54 @@
 			"description": "Custom tint color when Color Tint Mode is set to 5.",
 			"type": "color",
 			"default": [ 220, 80, 255 ]
+		},
+		"custom-shape": {
+			"name": "Custom Shape",
+			"description": "Base shape for the Custom Builder shader:\n0. Radial Rings\n1. Audio Waves\n2. Beat Bulge\n3. Kaleidoscope\n4. Vortex\n5. Hyperspace Tunnel",
+			"type": "int",
+			"default": 0,
+			"min": 0,
+			"max": 5,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"custom-color1": {
+			"name": "Custom Color 1",
+			"description": "First gradient color for the Custom Builder shader.",
+			"type": "color",
+			"default": [ 80, 120, 255 ]
+		},
+		"custom-color2": {
+			"name": "Custom Color 2",
+			"description": "Second gradient color for the Custom Builder shader.",
+			"type": "color",
+			"default": [ 255, 80, 180 ]
+		},
+		"custom-speed": {
+			"name": "Custom Speed",
+			"description": "Animation speed multiplier for the Custom Builder shader.",
+			"type": "float",
+			"default": 1.0,
+			"min": 0.1,
+			"max": 3.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
+		},
+		"custom-scale": {
+			"name": "Custom Scale",
+			"description": "Effect strength for the Custom Builder shader.",
+			"type": "float",
+			"default": 1.0,
+			"min": 0.0,
+			"max": 3.0,
+			"control": {
+				"arrows": true,
+				"slider": true
+			}
 		},
 		"chromatic-aberration": {
 			"name": "Chromatic Aberration",

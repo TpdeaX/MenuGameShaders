@@ -24,6 +24,13 @@ private:
     GLint m_uChromatic = -1;
     GLint m_uBeatFlash = -1;
     GLint m_uMouse = -1;
+    GLint m_uCustomShape = -1;
+    GLint m_uCustomColor1 = -1;
+    GLint m_uCustomColor2 = -1;
+    GLint m_uCustomSpeed = -1;
+    GLint m_uCustomScale = -1;
+
+    int m_randomStyle = 0;
 
     ShaderManager() = default;
 
@@ -32,6 +39,12 @@ public:
 
     bool compile();
     void setUniforms(cocos2d::CCGLProgram* program, cocos2d::CCSize const& winSize);
+
+    // Picks a new random shader style (used by the shader randomizer).
+    void rerollRandomStyle();
+
+    // Returns the shader-style setting, or a random one when randomization is on.
+    int getEffectiveStyle() const;
 
     cocos2d::CCGLProgram* getProgram() {
         if (!m_compiled) {

@@ -40,12 +40,17 @@ uniform float u_mids;         // Snare / vocals / synths
 uniform float u_treble;       // Hi-hats & percussion
 uniform float u_intensity;    // User sensitivity setting
 uniform float u_distortion;   // User distortion strength
-uniform int u_style;          // 0 to 11
+uniform int u_style;          // 0 to 13
 uniform int u_colorMode;      // 0 to 5
 uniform vec3 u_customColor;
 uniform float u_chromatic;    // 0.0 or 1.0
 uniform float u_beatFlash;    // Instant kick strobe
 uniform vec2 u_mouse;         // Cursor coordinates
+uniform int u_customShape;    // Custom style base shape (0..5)
+uniform vec3 u_customColor1;  // Custom style gradient color A
+uniform vec3 u_customColor2;  // Custom style gradient color B
+uniform float u_customSpeed;  // Custom style animation speed multiplier
+uniform float u_customScale;  // Custom style effect strength
 
 #define PI 3.14159265359
 
@@ -195,6 +200,58 @@ vec2 vortexDistort(vec2 uv, vec2 center, float time, float bass, float pulse, fl
     return twisted;
 }
 
+// Style 12: Approaching Bass Subwoofer (elliptical speaker cone pumping toward viewer)
+vec2 bassSubwooferDistort(vec2 uv, vec2 center, float time, float bass, float pulse, float strength) {
+    vec2 diff = uv - center;
+    float aspect = u_resolution.x / max(u_resolution.y, 1.0);
+    vec2 d = diff;
+    d.x *= aspect;
+    float dist = length(d);
+
+    // Magnify around the center so the scene rushes toward the camera on bass
+    // (the opposite of the receding hyperspace tunnel).
+    float zoom = (bass * 0.55 + pulse * 0.75) * 0.28 * strength;
+    vec2 zoomed = center + diff * (1.0 + zoom);
+
+    // Elliptical speaker rings that pump outward on every beat.
+    float pump = (bass * 0.6 + pulse * 0.9) * strength;
+    float r1 = smoothstep(0.07, 0.0, abs(dist - (0.20 + pump * 0.45)));
+    float r2 = smoothstep(0.10, 0.0, abs(dist - (0.40 + pump * 0.70))) * 0.8;
+    float r3 = smoothstep(0.14, 0.0, abs(dist - (0.62 + pump * 0.95))) * 0.55;
+
+    vec2 dir = (dist > 0.001) ? normalize(d) : vec2(0.0);
+    dir.x /= aspect;
+    vec2 ringUV = uv + dir * (r1 + r2 + r3) * 0.08;
+
+    return mix(zoomed, ringUV, 0.6);
+}
+
+// Style 13: Custom Builder (tunable via the Custom Style settings)
+vec2 customDistort(vec2 uv, vec2 center, float time, float bass, float mids, float pulse, float treble, int shape, float scale) {
+    if (shape == 0) {
+        // Radial rings
+        vec2 diff = uv - center;
+        float aspect = u_resolution.x / max(u_resolution.y, 1.0);
+        vec2 d = diff;
+        d.x *= aspect;
+        float dist = length(d);
+        float ring = smoothstep(0.08, 0.0, abs(dist - (0.30 + pulse * 0.25)));
+        vec2 dir = (dist > 0.001) ? normalize(d) : vec2(0.0);
+        dir.x /= aspect;
+        return uv + dir * ring * 0.06 * scale;
+    } else if (shape == 1) {
+        return audioWaveDistort(uv, time, bass, pulse, scale);
+    } else if (shape == 2) {
+        return beatBulgeDistort(uv, center, pulse, bass, scale);
+    } else if (shape == 3) {
+        return kaleidoscopeDistort(uv, center, time, pulse, scale);
+    } else if (shape == 4) {
+        return vortexDistort(uv, center, time, bass, pulse, scale);
+    } else {
+        return hyperspaceTunnelDistort(uv, center, time, pulse, bass, scale);
+    }
+}
+
 // Color tinting inspired by RobTop 2.2 teasers (Purple, Magenta, Cyan, Green)
 vec3 applyColorTint(vec3 baseCol, int mode, float time, float pulse, vec3 customCol) {
     if (mode == 0) {
@@ -234,6 +291,14 @@ vec3 applyColorTint(vec3 baseCol, int mode, float time, float pulse, vec3 custom
     return mix(baseCol, tinted, blend);
 }
 
+// Custom two-color gradient overlay for style 13.
+vec3 applyCustomGradient(vec3 col, vec2 uv, float time, float pulse, vec3 c1, vec3 c2) {
+    float t = 0.5 + 0.5 * sin(uv.x * 4.0 + uv.y * 3.0 + time * 0.6 + pulse * 2.0);
+    vec3 grad = mix(c1, c2, t);
+    float lum = dot(col, vec3(0.299, 0.587, 0.114));
+    return mix(col, grad * (0.35 + lum), 0.4 + pulse * 0.15);
+}
+
 void main() {
     vec2 uv = v_texCoord;
     vec2 center = vec2(0.5, 0.5);
@@ -267,6 +332,10 @@ void main() {
         distortedUV = pixelCrunchDistort(uv, u_pulse, u_distortion);
     } else if (u_style == 11) {
         distortedUV = vortexDistort(uv, center, u_time, u_bass, u_pulse, u_distortion);
+    } else if (u_style == 12) {
+        distortedUV = bassSubwooferDistort(uv, center, u_time, u_bass, u_pulse, u_distortion);
+    } else if (u_style == 13) {
+        distortedUV = customDistort(uv, center, u_time * u_customSpeed, u_bass, u_mids, u_pulse, u_treble, u_customShape, u_customScale);
     }
 
     // Blend distorted UV with original based on intensity
@@ -285,6 +354,11 @@ void main() {
 
     // Apply color tinting (purple, pink, green, etc.)
     color.rgb = applyColorTint(color.rgb, u_colorMode, u_time, u_pulse, u_customColor);
+
+    // Custom two-color gradient overlay for style 13
+    if (u_style == 13) {
+        color.rgb = applyCustomGradient(color.rgb, distortedUV, u_time * u_customSpeed, u_pulse, u_customColor1, u_customColor2);
+    }
 
     // CRT Scanlines & phosphors for style 8
     if (u_style == 8) {

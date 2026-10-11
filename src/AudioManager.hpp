@@ -22,6 +22,7 @@ private:
     float m_energyVariance = 0.005f;
     float m_maxObservedEnergy = 0.05f;
     float m_lastPeakTime = 0.0f;
+    float m_silenceTime = 0.0f;
     float m_shakeOffset = 0.0f;
     bool m_attached = false;
 

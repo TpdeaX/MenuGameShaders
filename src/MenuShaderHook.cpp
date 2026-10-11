@@ -4,6 +4,7 @@
 #include "MenuShaderNode.hpp"
 #include "AudioManager.hpp"
 #include "SystemAudioCapture.hpp"
+#include "ShaderManager.hpp"
 
 using namespace geode::prelude;
 
@@ -16,6 +17,9 @@ class $modify(MenuShaderHook, MenuLayer) {
         if (!Mod::get()->getSettingValue<bool>("enabled")) {
             return true;
         }
+
+        // Re-roll the random shader style every time the menu opens.
+        ShaderManager::get()->rerollRandomStyle();
 
         // Locate MenuGameLayer either by ID "main-menu-bg" or by first child
         MenuGameLayer* gameLayer = typeinfo_cast<MenuGameLayer*>(this->getChildByID("main-menu-bg"));
